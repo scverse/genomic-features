@@ -9,6 +9,8 @@
 
 Genomic annotations using BioConductor resources in Python.
 
+Very in-progress. Design doc being developed here: https://hackmd.io/@ivirshup/HJGmhT7Qn
+
 ## Getting started
 
 Please refer to the [documentation][link-docs]. In particular, the
