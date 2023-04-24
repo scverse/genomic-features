@@ -1,38 +1,14 @@
 # API
 
-## Preprocessing
+## Ensembl
 
 ```{eval-rst}
-.. module:: genomic_annotations.pp
+.. module:: genomic_annotations.ensembl
 .. currentmodule:: genomic_annotations
 
 .. autosummary::
     :toctree: generated
 
-    pp.basic_preproc
-```
-
-## Tools
-
-```{eval-rst}
-.. module:: genomic_annotations.tl
-.. currentmodule:: genomic_annotations
-
-.. autosummary::
-    :toctree: generated
-
-    tl.basic_tool
-```
-
-## Plotting
-
-```{eval-rst}
-.. module:: genomic_annotations.pl
-.. currentmodule:: genomic_annotations
-
-.. autosummary::
-    :toctree: generated
-
-    pl.basic_plot
-    pl.BasicClass
+    ensembl.annotation
+    ensembl.EnsemblDB
 ```

@@ -17,9 +17,9 @@ def annotation(species: str, version: str | int):
 
     Parameters
     ----------
-    species : str
-        The species name. E.g. Hsapies for human, Mmusculus for mouse.
-    version : str | int
+    species
+        The species name. E.g. Hsapiens for human, Mmusculus for mouse.
+    version
         The ensembl release number.
 
     Returns
