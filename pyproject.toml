@@ -19,7 +19,7 @@ urls.Documentation = "https://genomic-annotations.readthedocs.io/"
 urls.Source = "https://github.com/ivirshup/genomic-annotations"
 urls.Home-page = "https://github.com/ivirshup/genomic-annotations"
 dependencies = [
-    "ibis-framework",
+    "ibis-framework[sqlite]",
     "pooch",
     "pandas",
     "pyarrow",
