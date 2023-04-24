@@ -19,7 +19,10 @@ urls.Documentation = "https://genomic-annotations.readthedocs.io/"
 urls.Source = "https://github.com/ivirshup/genomic-annotations"
 urls.Home-page = "https://github.com/ivirshup/genomic-annotations"
 dependencies = [
-    "anndata",
+    "ibis-framework[sqlite]",
+    "pooch",
+    "pandas",
+    "pyarrow",
     # for debug logging (referenced from the issue template)
     "session-info"
 ]
