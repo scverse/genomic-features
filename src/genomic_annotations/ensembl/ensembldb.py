@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import ibis
+import pandas as pd
 
+from genomic_annotations._core import filters
 from genomic_annotations._core.cache import retrieve_annotation
 
 BIOC_ANNOTATION_HUB_URL = (
@@ -42,9 +44,15 @@ class EnsemblDB:
     def __init__(self, connection: ibis.BaseBackend):
         self.db = connection
 
-    def genes(self):
+    def genes(
+        self, filter: filters.AbstractFilterExpr = filters.EmptyFilter()
+    ) -> pd.DataFrame:
         """Get the genes table."""
-        return self.db.table("gene").execute()
+        filter.required_tables()
+        # TODO: handle joins
+        query = self.db.table("gene").filter(filter.convert())
+
+        return query.execute()
 
     def chromosomes(self):
         """Get chromosome information."""
