@@ -4,7 +4,7 @@ import ibis
 from ibis import _
 from pandas import DataFrame
 
-from genomic_annotations._core.cache import retrieve_annotation
+from genomic_features._core.cache import retrieve_annotation
 
 BIOC_ANNOTATION_HUB_URL = (
     "https://bioconductorhubs.blob.core.windows.net/annotationhub/"
