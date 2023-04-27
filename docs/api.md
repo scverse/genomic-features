@@ -28,7 +28,7 @@
     filters.EmptyFilter
 ```
 
-### Filter base classes (don't use these)
+### Filter base classes (don't use these directly)
 
 ```{eval-rst}
 .. module:: genomic_features._core.filters
@@ -38,4 +38,8 @@
     :toctree: generated
 
     _core.filters.AbstractFilterExpr
+    _core.filters.AbstractFilterOperatorExpr
+    _core.filters.AndFilterExpr
+    _core.filters.OrFilterExpr
+    _core.filters.AbstractFilterEqualityExpr
 ```
