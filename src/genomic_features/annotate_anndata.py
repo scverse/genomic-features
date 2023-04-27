@@ -80,7 +80,7 @@ def annotate_anndata(
     ]
     if len(missing_vars) > 0:
         warnings.warn(
-            f"Missing annotations for vars {missing_vars.tolist()}", stacklevel=2
+            f"Missing annotations for {len(missing_vars)}/{annotated_var.shape[0]} vars", stacklevel=2
         )
 
     return annotated_var
