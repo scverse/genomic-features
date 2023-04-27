@@ -41,12 +41,12 @@ class AbstractFilterOperatorExpr(AbstractFilterExpr):
 
 class AndFilterExpr(AbstractFilterOperatorExpr):
     def convert(self) -> ibis.Expr:
-        return self.left.convert() and self.right.convert()
+        return self.left.convert() & self.right.convert()
 
 
 class OrFilterExpr(AbstractFilterOperatorExpr):
     def convert(self) -> ibis.Expr:
-        return self.left.convert() or self.right.convert()
+        return self.left.convert() | self.right.convert()
 
 
 class AbstractFilterEqualityExpr(AbstractFilterExpr):

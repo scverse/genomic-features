@@ -1,12 +1,12 @@
 import pytest
 
-import genomic_annotations as ga
-from genomic_annotations._core import filters
+import genomic_features as gf
+from genomic_features._core import filters
 
 
 @pytest.fixture(scope="module")
 def hsapiens108():
-    return ga.ensembl.annotation("Hsapiens", 108)
+    return gf.ensembl.annotation("Hsapiens", 108)
 
 
 @pytest.mark.parametrize(
@@ -43,7 +43,7 @@ def test_and_filter(hsapiens108):
         hsapiens108.genes(
             filter=(
                 filters.GeneBioTypeFilter("protein_coding")
-                and filters.GeneBioTypeFilter("TR_C_gene")
+                & filters.GeneBioTypeFilter("TR_C_gene")
             )
         ).shape[0]
         == 0
@@ -52,12 +52,12 @@ def test_and_filter(hsapiens108):
         hsapiens108.genes(
             filter=(
                 filters.GeneBioTypeFilter("protein_coding")
-                and filters.GeneIDFilter(
+                & filters.GeneIDFilter(
                     ["LRG_997", "ENSG00000000460", "ENSG00000000003"]
                 )
             )
         ).shape[0]
-        == 3
+        == 2
     )
 
 
@@ -66,7 +66,7 @@ def test_or_filter(hsapiens108):
         hsapiens108.genes(
             filter=(
                 filters.GeneBioTypeFilter("protein_coding")
-                or filters.GeneBioTypeFilter("TR_C_gene")
+                | filters.GeneBioTypeFilter("TR_C_gene")
             )
         ).shape[0]
         == hsapiens108.genes()["gene_biotype"]
@@ -76,8 +76,8 @@ def test_or_filter(hsapiens108):
     assert (
         hsapiens108.genes(
             filter=(
-                filters.GeneBioTypeFilter("protein_coding")
-                or filters.GeneIDFilter(
+                filters.GeneIDFilter("LRG_997")
+                | filters.GeneIDFilter(
                     ["LRG_997", "ENSG00000000460", "ENSG00000000003"]
                 )
             )
