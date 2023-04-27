@@ -10,7 +10,7 @@
             "author_full_name": "Isaac Virshup",
             "author_email": "ivirshup@gmail.com",
             "github_user": "ivirshup",
-            "project_repo": "https://github.com/ivirshup/genomic-features",
+            "project_repo": "https://github.com/scverse/genomic-features",
             "license": "BSD 3-Clause License",
             "_copy_without_render": [
                 ".github/workflows/**.yaml",
