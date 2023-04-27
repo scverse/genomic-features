@@ -30,6 +30,8 @@ def annotate_anndata(
     annotated_var
         The annotated AnnData.var DataFrame.
     """
+    # Check for common columns between adata_var and annotation_df
+
     # Pick column with IDs in annotation table
     if id_column is None:
         id_column = [
@@ -76,6 +78,7 @@ def annotate_anndata(
         annotated_var.index.name = index_name
     else:
         annotated_var = annotated_var.loc[adata_var_merge.index]
+        annotated_var = annotated_var.drop('var_names', axis=1)
 
     # Check for missing genes
     missing_vars = annotated_var.index[
