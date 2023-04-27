@@ -11,6 +11,7 @@
 
     ensembl.annotation
     ensembl.EnsemblDB
+    ensembl.list_ensdb_annotations
 ```
 
 ```{eval-rst}
