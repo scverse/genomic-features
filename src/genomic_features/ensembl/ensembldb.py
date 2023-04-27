@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import glob
+import os
+
 import ibis
+import pooch
+import requests
 from ibis import _
-from pandas import DataFrame
+from pandas import DataFrame, Timestamp
 
 from genomic_features._core.cache import retrieve_annotation
+
+PKG_CACHE_DIR = "genomic-features"
 
 BIOC_ANNOTATION_HUB_URL = (
     "https://bioconductorhubs.blob.core.windows.net/annotationhub/"
@@ -12,6 +19,10 @@ BIOC_ANNOTATION_HUB_URL = (
 ENSEMBL_URL_TEMPLATE = (
     BIOC_ANNOTATION_HUB_URL + "AHEnsDbs/v{version}/EnsDb.{species}.v{version}.sqlite"
 )
+ANNOTATION_HUB_URL = (
+    "https://annotationhub.bioconductor.org/metadata/annotationhub.sqlite3"
+)
+TIMESTAMP_URL = "https://annotationhub.bioconductor.org/metadata/database_timestamp"
 
 
 def annotation(species: str, version: str | int):
@@ -51,10 +62,20 @@ def list_versions(species: str) -> DataFrame:
     DataFrame
         A table of available versions in EnsDb for species of interest.
     """
-    ANNOTATION_HUB_URL = (
-        "https://annotationhub.bioconductor.org/metadata/annotationhub.sqlite3"
-    )
     ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
+
+    # Get latest AnnotationHub timestamp
+    timestamp = requests.get(TIMESTAMP_URL).text
+    ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
+    latest_ts = Timestamp(timestamp).replace(tzinfo=None)
+    cached_ts = ahdb.table("timestamp").execute()["timestamp"][0]
+    if latest_ts != cached_ts:
+        cached_db = glob.glob(
+            os.path.join(pooch.os_cache("genomic-features"), "*annotationhub.sqlite3")
+        )[0]
+        os.remove(cached_db)
+        ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
+
     version_table = ahdb.table("rdatapaths").filter(_.rdataclass == "EnsDb").execute()
     version_table = version_table[version_table["rdatapath"].str.contains(species)]
     # check that species exists
@@ -64,9 +85,9 @@ def list_versions(species: str) -> DataFrame:
         )
     else:
         version_table["Ensembl_version"] = version_table["rdatapath"].str.split(
-        "/", expand=True
+            "/", expand=True
         )[1]
-        version_table["Species"] = species    
+        version_table["Species"] = species
         return version_table[["Species", "Ensembl_version"]]
 
 
