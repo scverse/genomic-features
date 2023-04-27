@@ -47,32 +47,35 @@ def annotate_anndata(
         ].is_unique, "Column specified by `id_column` does not contain unique IDs"
 
     # Pick IDs in adata_var table
+    adata_var_merge = adata_var.copy()
     if on is None:
         assert (
-            adata_var.index.is_unique
+            adata_var_merge.index.is_unique
         ), "var_names do not contain unique IDs - specify ID column with `on` parameter"
-        index_name = adata_var.index.name
-        adata_var = adata_var.reset_index(names="var_names")
+        index_name = adata_var_merge.index.name
+        adata_var_merge = adata_var_merge.reset_index(names="var_names")
     else:
         assert (
-            on in adata_var.columns
-        ), "Column specified by `on` does not exist in adata_var"
-        assert adata_var[
+            on in adata_var_merge.columns
+        ), "Column specified by `on` does not exist in adata_var_merge"
+        assert adata_var_merge[
             on
         ].is_unique, "Column specified by `on` does not contain unique IDs"
-        adata_var["var_names"] = adata_var[on].copy()
+        adata_var_merge["var_names"] = adata_var_merge[on].copy()
 
-    annotated_var = adata_var.reset_index().merge(
-        annotation_df, how="left", right_on=id_column, left_on="var_names"
-    ).set_index("index")
+    annotated_var = (
+        adata_var_merge.reset_index()
+        .merge(annotation_df, how="left", right_on=id_column, left_on="var_names")
+        .set_index("index")
+    )
 
     # Retain order and var_names
     if on is None:
         annotated_var = annotated_var.set_index("var_names")
-        annotated_var = annotated_var.loc[adata_var["var_names"]]
+        annotated_var = annotated_var.loc[adata_var_merge["var_names"]]
         annotated_var.index.name = index_name
     else:
-        annotated_var = annotated_var.loc[adata_var.index]
+        annotated_var = annotated_var.loc[adata_var_merge.index]
 
     # Check for missing genes
     missing_vars = annotated_var.index[
@@ -80,7 +83,8 @@ def annotate_anndata(
     ]
     if len(missing_vars) > 0:
         warnings.warn(
-            f"Missing annotations for {len(missing_vars)}/{annotated_var.shape[0]} vars", stacklevel=2
+            f"Missing annotations for {len(missing_vars)}/{annotated_var.shape[0]} vars",
+            stacklevel=2,
         )
 
     return annotated_var
