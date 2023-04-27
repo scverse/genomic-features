@@ -59,18 +59,18 @@ def annotation(species: str, version: str | int):
     return ensdb
 
 
-def list_versions(species: str) -> DataFrame:
-    """List available Ensembl versions for a species.
+def list_ensdb_annotations(species: str | list[str] = None) -> DataFrame:
+    """List available Ensembl gene annotations.
 
     Parameters
     ----------
-    species
-        The species name. E.g. Hsapiens for human, Mmusculus for mouse.
+    species 
+        Show gene annotations for subset of species E.g. Hsapiens for human, Mmusculus for mouse (optional)
 
     Returns
     -------
     DataFrame
-        A table of available versions in EnsDb for species of interest.
+        A table of available species and annotation versions in EnsDb.
     """
     # Get latest AnnotationHub timestamp
     db_path = retrieve_annotation(ANNOTATION_HUB_URL)
@@ -83,20 +83,27 @@ def list_versions(species: str) -> DataFrame:
         ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
 
     version_table = ahdb.table("rdatapaths").filter(_.rdataclass == "EnsDb").execute()
-    version_table = version_table[
-        version_table["rdatapath"].str.contains(f"EnsDb.{species}.v")
-    ]
-    # check that species exists
-    if version_table.shape[0] == 0:
-        raise ValueError(
-            f"No Ensembl database found for {species}. Check species name."
-        )
-    else:
-        version_table["Ensembl_version"] = version_table["rdatapath"].str.split(
-            "/", expand=True
-        )[1]
-        version_table["Species"] = species
-        return version_table[["Species", "Ensembl_version"]]
+    version_table["Species"] = version_table['rdatapath'].str.split('/', expand=True)[2].str.split('.', expand=True)[1]
+    if species is not None:
+        if isinstance(species, str):
+            version_table = version_table[
+                version_table["Species"] == species
+            ]
+        else:
+            version_table = version_table[
+                version_table["Species"].isin(species)
+            ]
+        # check that species exist
+        if version_table.shape[0] == 0:
+            raise ValueError(
+                f"No Ensembl database found for {species}. Check species name."
+            )
+    
+    version_table["Ensembl_version"] = version_table["rdatapath"].str.split(
+        "/", expand=True
+    )[1]
+    version_table["Ensembl_version"] = version_table["Ensembl_version"].str.replace("v", "").astype(int)
+    return version_table[["Species", "Ensembl_version"]].sort_values(['Species', 'Ensembl_version'])
 
 
 class EnsemblDB:
