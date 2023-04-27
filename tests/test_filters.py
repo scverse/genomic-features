@@ -20,7 +20,7 @@ def hsapiens108():
     ],
 )
 def test_equality_filter_single(hsapiens108, filt):
-    result = hsapiens108.genes(filter=filt)[filt.column]
+    result = hsapiens108.genes(filter=filt)[list(filt.columns())]
     assert set(result) == {filt.value}
 
 
@@ -32,7 +32,7 @@ def test_equality_filter_single(hsapiens108, filt):
     ],
 )
 def test_equality_filter_list(hsapiens108, filt):
-    result = hsapiens108.genes(filter=filt)[filt.column]
+    result = hsapiens108.genes(filter=filt)[list(filt.columns())]
     assert set(result) == set(filt.value)
 
 

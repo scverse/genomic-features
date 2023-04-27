@@ -21,12 +21,19 @@ class AbstractFilterExpr(ABC):
     def required_tables(self) -> set[str]:
         pass
 
+    @abstractmethod
+    def columns(self) -> set[str]:
+        pass
+
 
 class EmptyFilter(AbstractFilterExpr):
     def convert(self) -> None:
         return None
 
     def required_tables(self) -> set[str]:
+        return set()
+
+    def columns(self) -> set[str]:
         return set()
 
 
@@ -37,6 +44,9 @@ class AbstractFilterOperatorExpr(AbstractFilterExpr):
 
     def required_tables(self) -> set[str]:
         return self.left.required_tables() & self.right.required_tables()
+
+    def columns(self) -> set[str]:
+        return self.left.columns() | self.right.columns()
 
 
 class AndFilterExpr(AbstractFilterOperatorExpr):
@@ -53,22 +63,16 @@ class AbstractFilterEqualityExpr(AbstractFilterExpr):
     def __init__(self, value: str | list[str]):
         self.value = value
 
-    @property
-    @abstractmethod
-    def column(self) -> str:
-        pass
-
     def convert(self) -> ibis.expr.deferred.Deferred:
         if isinstance(self.value, str):
-            return ibis.deferred[self.column] == self.value
+            return ibis.deferred[list(self.columns())[0]] == self.value
         else:
-            return ibis.deferred[self.column].isin(self.value)
+            return ibis.deferred[list(self.columns())[0]].isin(self.value)
 
 
 class GeneIDFilter(AbstractFilterEqualityExpr):
-    @property
-    def column(self) -> str:
-        return "gene_id"
+    def columns(self) -> set[str]:
+        return {"gene_id"}
 
     def required_tables(self) -> set[str]:
         # TODO: Joining on gene_id is not necessary for transcript queries
@@ -76,9 +80,8 @@ class GeneIDFilter(AbstractFilterEqualityExpr):
 
 
 class GeneBioTypeFilter(AbstractFilterEqualityExpr):
-    @property
-    def column(self) -> str:
-        return "gene_biotype"
+    def columns(self) -> set[str]:
+        return {"gene_biotype"}
 
     def required_tables(self) -> set[str]:
         return {"gene"}
