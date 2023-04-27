@@ -14,6 +14,8 @@
     ensembl.list_ensdb_annotations
 ```
 
+## Filters
+
 ```{eval-rst}
 .. module:: genomic_features.filters
 .. currentmodule:: genomic_features
@@ -25,6 +27,8 @@
     filters.GeneBioTypeFilter
     filters.EmptyFilter
 ```
+
+### Filter base classes (don't use these)
 
 ```{eval-rst}
 .. module:: genomic_features._core.filters
