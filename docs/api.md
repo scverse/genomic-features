@@ -3,8 +3,8 @@
 ## Ensembl
 
 ```{eval-rst}
-.. module:: genomic_annotations.ensembl
-.. currentmodule:: genomic_annotations
+.. module:: genomic_features.ensembl
+.. currentmodule:: genomic_features
 
 .. autosummary::
     :toctree: generated
