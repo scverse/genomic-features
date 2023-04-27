@@ -3,7 +3,8 @@ from __future__ import annotations
 import ibis
 import pandas as pd
 
-from genomic_features._core import filters
+from genomic_features._core import filters as _filters
+from genomic_features import filters
 from genomic_features._core.cache import retrieve_annotation
 
 
@@ -46,7 +47,7 @@ class EnsemblDB:
         self.db = connection
 
     def genes(
-        self, filter: filters.AbstractFilterExpr = filters.EmptyFilter()
+        self, filter: _filters.AbstractFilterExpr = filters.EmptyFilter()
     ) -> pd.DataFrame:
         """Get the genes table."""
         filter.required_tables()

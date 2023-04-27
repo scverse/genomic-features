@@ -27,7 +27,7 @@ class AbstractFilterExpr(ABC):
 
 
 class EmptyFilter(AbstractFilterExpr):
-    def __repr__() -> str:
+    def __repr__(self) -> str:
         return "EmptyFilter()"
 
     def convert(self) -> None:
