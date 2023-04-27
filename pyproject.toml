@@ -16,8 +16,8 @@ maintainers = [
     {name = "Isaac Virshup", email = "ivirshup@gmail.com"},
 ]
 urls.Documentation = "https://genomic-features.readthedocs.io/"
-urls.Source = "https://github.com/ivirshup/genomic-features"
-urls.Home-page = "https://github.com/ivirshup/genomic-features"
+urls.Source = "https://github.com/scverse/genomic-features"
+urls.Home-page = "https://github.com/scverse/genomic-features"
 dependencies = [
     "ibis-framework[sqlite]",
     "pooch",

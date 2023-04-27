@@ -3,8 +3,8 @@
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
 
-[badge-tests]: https://img.shields.io/github/actions/workflow/status/ivirshup/genomic-features/test.yaml?branch=main
-[link-tests]: https://github.com/ivirshup/genomic-features/actions/workflows/test.yml
+[badge-tests]: https://img.shields.io/github/actions/workflow/status/scverse/genomic-features/test.yaml?branch=main
+[link-tests]: https://github.com/scverse/genomic-features/actions/workflows/test.yml
 [badge-docs]: https://img.shields.io/readthedocs/genomic-features
 
 Genomic annotations using BioConductor resources in Python.
@@ -35,7 +35,7 @@ pip install genomic-features
 1. Install the latest development version:
 
 ```bash
-pip install git+https://github.com/ivirshup/genomic-features.git@main
+pip install git+https://github.com/scverse/genomic-features.git@main
 ```
 
 ## Release notes
@@ -52,7 +52,7 @@ If you found a bug, please use the [issue tracker][issue-tracker].
 > t.b.a
 
 [scverse-discourse]: https://discourse.scverse.org/
-[issue-tracker]: https://github.com/ivirshup/genomic-features/issues
+[issue-tracker]: https://github.com/scverse/genomic-features/issues
 [changelog]: https://genomic-features.readthedocs.io/latest/changelog.html
 [link-docs]: https://genomic-features.readthedocs.io
 [link-api]: https://genomic-features.readthedocs.io/latest/api.html
