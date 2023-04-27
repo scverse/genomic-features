@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import glob
-import os
-
 import ibis
-import pooch
 import requests
 from ibis import _
 from pandas import DataFrame, Timestamp
 from requests.exceptions import HTTPError
 
+from genomic_features import filters
+from genomic_features._core import filters as _filters
 from genomic_features._core.cache import retrieve_annotation
 
 PKG_CACHE_DIR = "genomic-features"
@@ -59,12 +57,12 @@ def annotation(species: str, version: str | int):
     return ensdb
 
 
-def list_ensdb_annotations(species: str | list[str] = None) -> DataFrame:
+def list_ensdb_annotations(species: None | str | list[str] = None) -> DataFrame:
     """List available Ensembl gene annotations.
 
     Parameters
     ----------
-    species 
+    species
         Show gene annotations for subset of species E.g. Hsapiens for human, Mmusculus for mouse (optional)
 
     Returns
@@ -83,27 +81,31 @@ def list_ensdb_annotations(species: str | list[str] = None) -> DataFrame:
         ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
 
     version_table = ahdb.table("rdatapaths").filter(_.rdataclass == "EnsDb").execute()
-    version_table["Species"] = version_table['rdatapath'].str.split('/', expand=True)[2].str.split('.', expand=True)[1]
+    version_table["Species"] = (
+        version_table["rdatapath"]
+        .str.split("/", expand=True)[2]
+        .str.split(".", expand=True)[1]
+    )
     if species is not None:
         if isinstance(species, str):
-            version_table = version_table[
-                version_table["Species"] == species
-            ]
+            version_table = version_table[version_table["Species"] == species]
         else:
-            version_table = version_table[
-                version_table["Species"].isin(species)
-            ]
+            version_table = version_table[version_table["Species"].isin(species)]
         # check that species exist
         if version_table.shape[0] == 0:
             raise ValueError(
                 f"No Ensembl database found for {species}. Check species name."
             )
-    
+
     version_table["Ensembl_version"] = version_table["rdatapath"].str.split(
         "/", expand=True
     )[1]
-    version_table["Ensembl_version"] = version_table["Ensembl_version"].str.replace("v", "").astype(int)
-    return version_table[["Species", "Ensembl_version"]].sort_values(['Species', 'Ensembl_version'])
+    version_table["Ensembl_version"] = (
+        version_table["Ensembl_version"].str.replace("v", "").astype(int)
+    )
+    return version_table[["Species", "Ensembl_version"]].sort_values(
+        ["Species", "Ensembl_version"]
+    )
 
 
 class EnsemblDB:
@@ -112,9 +114,15 @@ class EnsemblDB:
     def __init__(self, connection: ibis.BaseBackend):
         self.db = connection
 
-    def genes(self):
+    def genes(
+        self, filter: _filters.AbstractFilterExpr = filters.EmptyFilter()
+    ) -> DataFrame:
         """Get the genes table."""
-        return self.db.table("gene").execute()
+        filter.required_tables()
+        # TODO: handle joins
+        query = self.db.table("gene").filter(filter.convert())
+
+        return query.execute()
 
     def chromosomes(self):
         """Get chromosome information."""

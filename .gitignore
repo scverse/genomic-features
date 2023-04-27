@@ -17,6 +17,7 @@ __pycache__/
 # Tests and coverage
 /.pytest_cache/
 /.cache/
+.coverage
 /data/
 
 # docs
