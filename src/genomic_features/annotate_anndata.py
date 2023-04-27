@@ -62,9 +62,9 @@ def annotate_anndata(
         ].is_unique, "Column specified by `on` does not contain unique IDs"
         adata_var["var_names"] = adata_var[on].copy()
 
-    annotated_var = adata_var.merge(
+    annotated_var = adata_var.reset_index().merge(
         annotation_df, how="left", right_on=id_column, left_on="var_names"
-    )
+    ).set_index("index")
 
     # Retain order and var_names
     if on is None:

@@ -49,7 +49,6 @@ adata_custom_genes = AnnData(
     ),
 )
 
-
 def test_missing_genes():
     with pytest.warns(UserWarning):
         annotated_adata_var = gf.annotate_anndata(adata_custom_genes.var, genes)
