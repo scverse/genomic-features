@@ -1,4 +1,5 @@
 import warnings
+import numpy as np
 
 from pandas import DataFrame
 
@@ -30,8 +31,16 @@ def annotate_anndata(
     annotated_var
         The annotated AnnData.var DataFrame.
     """
+    
     # Check for common columns between adata_var and annotation_df
-
+    clash_columns = []
+    common_cols = annotation_df.columns[annotation_df.columns.isin(adata_var.columns)].tolist()
+    for c in common_cols:
+        if len(np.intersect1d(adata_var[c], annotation_df[c])) == 0:
+            clash_columns.append(c)
+    if len(clash_columns) > 0:
+        raise ValueError(f'var table and annotation table contain column {c} with non-intersecting values')
+    
     # Pick column with IDs in annotation table
     if id_column is None:
         id_column = [
@@ -65,9 +74,12 @@ def annotate_anndata(
         ].is_unique, "Column specified by `on` does not contain unique IDs"
         adata_var_merge["var_names"] = adata_var_merge[on].copy()
 
+    # Merge
     annotated_var = (
         adata_var_merge.reset_index()
-        .merge(annotation_df, how="left", right_on=id_column, left_on="var_names")
+        .merge(annotation_df, how="left", 
+               right_on = [id_column] + common_cols, 
+               left_on=["var_names"] + common_cols)  
         .set_index("index")
     )
 
