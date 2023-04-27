@@ -8,6 +8,7 @@ import pooch
 import requests
 from ibis import _
 from pandas import DataFrame, Timestamp
+from requests.exceptions import HTTPError
 
 from genomic_features._core.cache import retrieve_annotation
 
@@ -40,13 +41,22 @@ def annotation(species: str, version: str | int):
     EnsemblDB
         The annotation database.
     """
-    return EnsemblDB(
-        ibis.sqlite.connect(
-            retrieve_annotation(
-                ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
+    try:
+        ensdb = EnsemblDB(
+            ibis.sqlite.connect(
+                retrieve_annotation(
+                    ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
+                )
             )
         )
-    )
+    except HTTPError as err:
+        if err.response.status_code == 404:
+            raise ValueError(
+                f"No Ensembl database found for {species} v{version}. Check available versions with `genomic_features.ensembl.list_versions`."
+            ) from err
+        else:
+            raise HTTPError from err
+    return ensdb
 
 
 def list_versions(species: str) -> DataFrame:
@@ -77,7 +87,9 @@ def list_versions(species: str) -> DataFrame:
         ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
 
     version_table = ahdb.table("rdatapaths").filter(_.rdataclass == "EnsDb").execute()
-    version_table = version_table[version_table["rdatapath"].str.contains(f'EnsDb.{species}.v')]
+    version_table = version_table[
+        version_table["rdatapath"].str.contains(f"EnsDb.{species}.v")
+    ]
     # check that species exists
     if version_table.shape[0] == 0:
         raise ValueError(
