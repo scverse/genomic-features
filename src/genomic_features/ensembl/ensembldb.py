@@ -57,16 +57,16 @@ def list_versions(species: str) -> DataFrame:
     ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
     version_table = ahdb.table("rdatapaths").filter(_.rdataclass == "EnsDb").execute()
     version_table = version_table[version_table["rdatapath"].str.contains(species)]
-    version_table["Ensembl_version"] = version_table["rdatapath"].str.split(
-        "/", expand=True
-    )[1]
-    version_table["Species"] = species
     # check that species exists
     if version_table.shape[0] == 0:
         raise ValueError(
             f"No Ensembl database found for {species}. Check species name."
         )
     else:
+        version_table["Ensembl_version"] = version_table["rdatapath"].str.split(
+        "/", expand=True
+        )[1]
+        version_table["Species"] = species    
         return version_table[["Species", "Ensembl_version"]]
 
 
