@@ -1,6 +1,6 @@
 from importlib.metadata import version
 
-from . import ensembl
+from . import ensembl, filters
 
 __all__ = ["ensembl"]
 

@@ -1,7 +1,7 @@
 import pytest
 
 import genomic_features as gf
-from genomic_features._core import filters
+from genomic_features import filters
 
 
 @pytest.fixture(scope="module")
