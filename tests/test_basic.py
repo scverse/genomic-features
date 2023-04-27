@@ -1,5 +1,6 @@
-import genomic_features as gf
 import pandas as pd
+
+import genomic_features as gf
 
 
 def test_package_has_version():

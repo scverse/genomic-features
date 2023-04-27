@@ -3,10 +3,9 @@ from __future__ import annotations
 import ibis
 import pandas as pd
 
-from genomic_features._core import filters as _filters
 from genomic_features import filters
+from genomic_features._core import filters as _filters
 from genomic_features._core.cache import retrieve_annotation
-
 
 BIOC_ANNOTATION_HUB_URL = (
     "https://bioconductorhubs.blob.core.windows.net/annotationhub/"
