@@ -72,18 +72,14 @@ def list_versions(species: str) -> DataFrame:
     DataFrame
         A table of available versions in EnsDb for species of interest.
     """
-    ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
-
     # Get latest AnnotationHub timestamp
+    db_path = retrieve_annotation(ANNOTATION_HUB_URL)
     timestamp = requests.get(TIMESTAMP_URL).text
-    ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
+    ahdb = ibis.sqlite.connect(db_path)
     latest_ts = Timestamp(timestamp).replace(tzinfo=None)
     cached_ts = ahdb.table("timestamp").execute()["timestamp"][0]
     if latest_ts != cached_ts:
-        cached_db = glob.glob(
-            os.path.join(pooch.os_cache("genomic-features"), "*annotationhub.sqlite3")
-        )[0]
-        os.remove(cached_db)
+        db_path.unlink()
         ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
 
     version_table = ahdb.table("rdatapaths").filter(_.rdataclass == "EnsDb").execute()
