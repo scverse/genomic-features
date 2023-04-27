@@ -27,6 +27,9 @@ class AbstractFilterExpr(ABC):
 
 
 class EmptyFilter(AbstractFilterExpr):
+    def __repr__() -> str:
+        return "EmptyFilter()"
+
     def convert(self) -> None:
         return None
 
@@ -50,11 +53,17 @@ class AbstractFilterOperatorExpr(AbstractFilterExpr):
 
 
 class AndFilterExpr(AbstractFilterOperatorExpr):
+    def __repr__(self) -> str:
+        return f"({self.left} & {self.right})"
+
     def convert(self) -> ibis.Expr:
         return self.left.convert() & self.right.convert()
 
 
 class OrFilterExpr(AbstractFilterOperatorExpr):
+    def __repr__(self) -> str:
+        return f"({self.left} | {self.right})"
+
     def convert(self) -> ibis.Expr:
         return self.left.convert() | self.right.convert()
 
@@ -62,6 +71,9 @@ class OrFilterExpr(AbstractFilterOperatorExpr):
 class AbstractFilterEqualityExpr(AbstractFilterExpr):
     def __init__(self, value: str | list[str]):
         self.value = value
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.value})"
 
     def convert(self) -> ibis.expr.deferred.Deferred:
         if isinstance(self.value, str):
