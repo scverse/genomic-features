@@ -1,6 +1,6 @@
 import pooch
 
-PKG_CACHE_DIR = "genomic-annotations"
+PKG_CACHE_DIR = "genomic-features"
 
 
 def retrieve_annotation(url):

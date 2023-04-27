@@ -4,4 +4,4 @@ from . import ensembl
 
 __all__ = ["ensembl"]
 
-__version__ = version("genomic-annotations")
+__version__ = version("genomic-features")

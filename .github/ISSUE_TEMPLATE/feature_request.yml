@@ -1,5 +1,5 @@
 name: Feature request
-description: Propose a new feature for genomic-annotations
+description: Propose a new feature for genomic-features
 labels: enhancement
 body:
     - type: textarea

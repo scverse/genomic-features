@@ -4,13 +4,13 @@
     "checkout": null,
     "context": {
         "cookiecutter": {
-            "project_name": "genomic-annotations",
-            "package_name": "genomic_annotations",
+            "project_name": "genomic-features",
+            "package_name": "genomic_features",
             "project_description": "Genomic annotations using BioConductor resources in Python.",
             "author_full_name": "Isaac Virshup",
             "author_email": "ivirshup@gmail.com",
             "github_user": "ivirshup",
-            "project_repo": "https://github.com/ivirshup/genomic-annotations",
+            "project_repo": "https://github.com/ivirshup/genomic-features",
             "license": "BSD 3-Clause License",
             "_copy_without_render": [
                 ".github/workflows/**.yaml",
