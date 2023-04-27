@@ -23,6 +23,7 @@ dependencies = [
     "pooch",
     "pandas",
     "pyarrow",
+    "anndata",
     # for debug logging (referenced from the issue template)
     "session-info"
 ]
