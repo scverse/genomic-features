@@ -30,13 +30,20 @@ def annotation(species: str, version: str | int):
     EnsemblDB
         The annotation database.
     """
-    return EnsemblDB(
-        ibis.sqlite.connect(
-            retrieve_annotation(
-                ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
-            )
+    db = ibis.duckdb.connect()
+    pth = str(
+        retrieve_annotation(
+            ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
         )
     )
+    db.raw_sql(
+        f"""
+    INSTALL sqlite;
+    LOAD sqlite;
+    CALL sqlite_attach('{pth}');
+    """
+    )
+    return EnsemblDB(db)
 
 
 class EnsemblDB:
@@ -120,11 +127,13 @@ class EnsemblDB:
             query = query.join(self.db.table(t), predicates=common_cols, how="inner")
         return query
 
-    def left_join_query(self, query, tables):
+    def left_join_query(self, tables):
         """
         Join tables in left join and return a query.
         """
-        for t in tables:
+        # build query
+        query = self.db.table(tables[0])
+        for t in tables[1:]:
             # determine common columns
             common_cols = list(set(query.columns) & set(self.db.table(t).columns))
             query = query.join(
