@@ -81,18 +81,51 @@ class AbstractFilterEqualityExpr(AbstractFilterExpr):
         else:
             return ibis.deferred[list(self.columns())[0]].isin(self.value)
 
+
+#  ------------------------ OVERLAP TYPE: any ------------------------ #
+# Range:       |==============================|
+# Annotation: |---|     |-------|           |-----| |---|
+# Selected:    ***       *******             *****
+
+#  ------------------------ OVERLAP TYPE: within --------------------- #
+# Range:       |==============================|
+# Annotation: |---|     |-------|           |-----| |---|
+# Selected:              *******
+
+
 class AbstractFilterRangeExpr(AbstractFilterExpr):
-    def __init__(self, value: str ):
+    def __init__(self, value: str, type: str = "any"):
         self.value = value
+        self.type = type
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.value})"
 
     def convert(self) -> ibis.expr.deferred.Deferred:
-        range_start, range_end = self.value.split(":")
+        range_seq_name, range_coords = self.value.split(":")
+        range_start, range_end = range_coords.split("-")
         start_column, end_column, seq_name_column = list(self.columns())
-        return ibis.deferred[list(self.columns())[0]] == self.value
-        
+        if self.type == "any":
+            return (ibis.deferred[seq_name_column] == range_seq_name) & (
+                (
+                    (ibis.deferred[end_column] > int(range_start))
+                    & (ibis.deferred[end_column] < int(range_end))
+                )
+                | (
+                    (ibis.deferred[start_column] > int(range_start))
+                    & (ibis.deferred[start_column] < int(range_end))
+                )
+            )
+        elif self.type == "within":
+            return (ibis.deferred[seq_name_column] == range_seq_name) & (
+                (ibis.deferred[end_column] < int(range_end))
+                & (ibis.deferred[start_column] > int(range_start))
+            )
+        else:
+            raise ValueError(
+                "Invalid overlap type. Valid options are 'any' and 'within'"
+            )
+
 
 class GeneIDFilter(AbstractFilterEqualityExpr):
     def columns(self) -> set[str]:
@@ -109,18 +142,23 @@ class GeneBioTypeFilter(AbstractFilterEqualityExpr):
 
     def required_tables(self) -> set[str]:
         return {"gene"}
-    
-class RangesFilter(AbstractFilterEqualityExpr):
-    '''
+
+
+class RangesFilter(AbstractFilterRangeExpr):
+    """
     Filter features within a genomic range
 
     Parameters
     ----------
     value : str
         Genomic range in the format "seq_name:start-end"
-    '''
+    type : str
+        String indicating how overlaps are to be filteres.
+        Options are 'any' and 'within'. Default is 'any'
+    """
+
     def columns(self) -> set[str]:
-        return {"gene_seq_start", "gene_seq_end", "seq_name"}
+        return ["gene_seq_start", "gene_seq_end", "seq_name"]
 
     def required_tables(self) -> set[str]:
         return {"gene"}
