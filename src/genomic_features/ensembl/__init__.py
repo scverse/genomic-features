@@ -1,1 +1,1 @@
-from .ensembldb import EnsemblDB, annotation
+from .ensembldb import EnsemblDB, annotation, list_ensdb_annotations

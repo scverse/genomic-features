@@ -7,27 +7,37 @@ import ibis
 
 # TODO: invert
 class AbstractFilterExpr(ABC):
+    """Base class for all filter expressions. Defines logical operators and interface."""
+
     def __and__(self, other):
         return AndFilterExpr(self, other)
 
     def __or__(self, other):
         return OrFilterExpr(self, other)
 
+    def __invert__(self):
+        return NotFilterExpr(self)
+
     @abstractmethod
     def convert(self) -> ibis.expr.deferred.Deferred:
+        """Convert genomic-features filter expression to ibis deferred expression."""
         pass
 
     @abstractmethod
     def required_tables(self) -> set[str]:
+        """Tables required by this filter."""
         pass
 
     @abstractmethod
     def columns(self) -> set[str]:
+        """Columns required by this filter."""
         pass
 
 
 class EmptyFilter(AbstractFilterExpr):
-    def __repr__() -> str:
+    """An empty filter that returns all rows."""
+
+    def __repr__(self) -> str:
         return "EmptyFilter()"
 
     def convert(self) -> None:
@@ -54,6 +64,8 @@ class AbstractFilterOperatorExpr(AbstractFilterExpr):
 
 
 class AndFilterExpr(AbstractFilterOperatorExpr):
+    """Logical and of two filters."""
+
     def __repr__(self) -> str:
         return f"({self.left} & {self.right})"
 
@@ -61,7 +73,27 @@ class AndFilterExpr(AbstractFilterOperatorExpr):
         return self.left.convert() & self.right.convert()
 
 
+class NotFilterExpr(AbstractFilterExpr):
+    """A filter that inverts the result of another filter."""
+
+    def __init__(self, expr: AbstractFilterExpr):
+        self.expr = expr
+
+    def __repr__(self) -> str:
+        return f"~{repr(self.expr)}"
+
+    def convert(self) -> ibis.expr.deferred.Deferred:
+        return ~self.expr.convert()
+
+    def columns(self) -> set[str]:
+        return self.expr.columns()
+
+    def required_tables(self) -> set[str]:
+        return self.expr.required_tables()
+
+
 class OrFilterExpr(AbstractFilterOperatorExpr):
+    """Logical or of two filters."""
 
     def __repr__(self) -> str:
         return f"({self.left} | {self.right})"
@@ -85,6 +117,8 @@ class AbstractFilterEqualityExpr(AbstractFilterExpr):
 
 
 class GeneIDFilter(AbstractFilterEqualityExpr):
+    """Filter by gene_id column."""
+
     def columns(self) -> set[str]:
         return {"gene_id"}
 
@@ -94,6 +128,7 @@ class GeneIDFilter(AbstractFilterEqualityExpr):
 
 
 class GeneBioTypeFilter(AbstractFilterEqualityExpr):
+    """Filter by gene_biotype column."""
 
     def columns(self) -> set[str]:
         return {"gene_biotype"}
