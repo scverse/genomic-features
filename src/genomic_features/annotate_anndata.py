@@ -1,14 +1,13 @@
 import warnings
-import numpy as np
 
-from pandas import DataFrame
+import pandas as pd 
 
 def annotate_anndata(
-    adata_var: DataFrame,
-    annotation_df: DataFrame,
+    adata_var: pd.DataFrame,
+    annotation_df: pd.DataFrame,
     on: str = None,
     id_column: str = None,
-) -> DataFrame:
+) -> pd.DataFrame:
     """
     Annotate variables from AnnData object with a DataFrame of annotations.
 
