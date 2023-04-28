@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import ibis
-import requests
 import numpy as np
+import requests
 from ibis import _
 from pandas import DataFrame, Timestamp
 from requests.exceptions import HTTPError
@@ -128,12 +128,14 @@ class EnsemblDB:
     def chromosomes(self):
         """Get chromosome information."""
         return self.db.table("chromosome").execute()
-    
+
     def promoters(
-            self, filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
-            upstream: int = 2000, downstream: int = 200,
-            canonical_transcripts: bool = False
-            ) -> DataFrame:
+        self,
+        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        upstream: int = 2000,
+        downstream: int = 200,
+        canonical_transcripts: bool = False,
+    ) -> DataFrame:
         """Get promoter annotations.
 
         Parameters
@@ -146,7 +148,7 @@ class EnsemblDB:
             Number of base pairs downstream of the TSS (default: 200).
         canonical_transcripts
             If True, return only canonical transcript for each gene (default: False).
-        
+
         Returns
         -------
         DataFrame
@@ -154,20 +156,25 @@ class EnsemblDB:
         """
         # TODO: change to get transcript table with gene level columns
         # something like:
-        # 
+        # tx_table = self.transcripts(cols = set(cols + ['seq_strand', 'seq_name', 'tx_is_canonical']), filter = filter)
         tx_table = self.genes(filter)
-    
+
         # Get promoter region based on strand
-        # strand = 1         |>>>>>>>>>>>>>>| 
-        # strand = -1                         |<<<<<<<<<<<<<<|   
+        # strand = 1         |>>>>>>>>>>>>>>|
+        # strand = -1                         |<<<<<<<<<<<<<<|
         # Tx SS:             *                               *
         # Promoter       ------                             ------
-        tx_ss = np.where(tx_table['seq_strand'] == 1, tx_table['gene_seq_start'], tx_table['gene_seq_end'])
-        tx_table['promoter_seq_start'] = np.where(tx_table['seq_strand'] == 1, tx_ss - upstream, tx_ss - downstream)
-        tx_table['promoter_seq_end'] = np.where(tx_table['seq_strand'] == 1, tx_ss + downstream, tx_ss + upstream)
+        tx_ss = np.where(
+            tx_table["seq_strand"] == 1,
+            tx_table["gene_seq_start"],
+            tx_table["gene_seq_end"],
+        )
+        tx_table["promoter_seq_start"] = np.where(
+            tx_table["seq_strand"] == 1, tx_ss - upstream, tx_ss - downstream
+        )
+        tx_table["promoter_seq_end"] = np.where(
+            tx_table["seq_strand"] == 1, tx_ss + downstream, tx_ss + upstream
+        )
         # if canonical_transcripts:
         #     tx_table = tx_table[tx_table["tx_is_canonical"] == 1]
-        return(tx_table)
-        
-
-
+        return tx_table
