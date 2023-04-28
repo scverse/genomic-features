@@ -1,6 +1,7 @@
 import warnings
 
-import pandas as pd 
+import pandas as pd
+
 
 def annotate_anndata(
     adata_var: pd.DataFrame,
@@ -29,7 +30,6 @@ def annotate_anndata(
     annotated_var
         The annotated AnnData.var DataFrame.
     """
-
     # Pick column with IDs in annotation table
     if id_column is None:
         id_column = [
@@ -43,27 +43,28 @@ def annotate_anndata(
             )
         if len(id_column) > 1:
             raise ValueError(
-                f"Multiple unique ID columns found in annotation_df - specify ID column with `id_column` parameter"
+                "Multiple unique ID columns found in annotation_df - specify ID column with `id_column` parameter"
             )
         else:
             id_column = id_column[0]
     else:
-        assert annotation_df[
-            id_column
-        ].is_unique, "Column specified by `id_column` does not contain unique IDs"
+        if not annotation_df[id_column].is_unique:
+            raise ValueError(f"Column {id_column} does not contain unique IDs")
 
     adata_var_merge = adata_var.copy()
 
-    # Check for common columns between adata_var and annotation_df 
+    # Check for common columns between adata_var and annotation_df
     # (these will be overwritten by the merge)
-    common_cols = annotation_df.columns[annotation_df.columns.isin(adata_var_merge.columns)].tolist()
+    common_cols = annotation_df.columns[
+        annotation_df.columns.isin(adata_var_merge.columns)
+    ].tolist()
     if len(common_cols) > 0:
         warnings.warn(
             f"Columns {common_cols} are present in both adata_var and annotation_df - these will be overwritten",
             stacklevel=2,
         )
         adata_var_merge.drop(common_cols, axis=1, inplace=True)
-    
+
     # Pick IDs in adata_var table
     if on is None:
         assert (
@@ -83,9 +84,7 @@ def annotate_anndata(
     # Merge
     annotated_var = (
         adata_var_merge.reset_index()
-        .merge(annotation_df, how="left",
-               right_on = [id_column],
-               left_on=["var_names"])
+        .merge(annotation_df, how="left", right_on=[id_column], left_on=["var_names"])
         .set_index("index")
     )
 
@@ -96,11 +95,13 @@ def annotate_anndata(
         annotated_var.index.name = index_name
     else:
         annotated_var = annotated_var.loc[adata_var_merge.index]
-        annotated_var = annotated_var.drop('var_names', axis=1)
+        annotated_var = annotated_var.drop("var_names", axis=1)
 
     # Check for missing genes
     missing_vars = annotated_var.index[
-        annotated_var[annotation_df.drop([id_column] + common_cols, axis=1).columns].isna().all(axis=1)
+        annotated_var[annotation_df.drop([id_column] + common_cols, axis=1).columns]
+        .isna()
+        .all(axis=1)
     ]
     if len(missing_vars) > 0:
         warnings.warn(
