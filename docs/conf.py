@@ -93,6 +93,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "anndata": ("https://anndata.readthedocs.io/en/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
 }
 
 # List of patterns, relative to source directory, that match files and
@@ -122,6 +123,11 @@ nitpick_ignore = [
     # If building the documentation fails because of a missing link that is outside your control,
     # you can add an exception to this list.
     #     ("py:class", "igraph.Graph"),
+]
+
+nitpick_ignore_regex = [
+    # Ibis uses mkdocs
+    (r".*", r"ibis\..*"),
 ]
 
 
