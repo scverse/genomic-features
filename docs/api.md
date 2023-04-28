@@ -25,6 +25,7 @@
 
     filters.GeneIDFilter
     filters.GeneBioTypeFilter
+    filters.GeneNameFilter
     filters.EmptyFilter
 ```
 

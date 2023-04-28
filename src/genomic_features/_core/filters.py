@@ -116,7 +116,7 @@ class AbstractFilterEqualityExpr(AbstractFilterExpr):
 
 
 class GeneIDFilter(AbstractFilterEqualityExpr):
-    """Filter by gene_id column."""
+    """Filter by gene_id."""
 
     def columns(self) -> set[str]:
         return {"gene_id"}
@@ -127,10 +127,20 @@ class GeneIDFilter(AbstractFilterEqualityExpr):
 
 
 class GeneBioTypeFilter(AbstractFilterEqualityExpr):
-    """Filter by gene_biotype column."""
+    """Filter by gene_biotype."""
 
     def columns(self) -> set[str]:
         return {"gene_biotype"}
+
+    def required_tables(self) -> set[str]:
+        return {"gene"}
+
+
+class GeneNameFilter(AbstractFilterEqualityExpr):
+    """Filter by gene_name."""
+
+    def columns(self) -> set[str]:
+        return {"gene_name"}
 
     def required_tables(self) -> set[str]:
         return {"gene"}

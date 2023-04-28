@@ -17,6 +17,7 @@ def hsapiens108():
         filters.GeneIDFilter("LRG_997"),
         filters.GeneBioTypeFilter("protein_coding"),
         filters.GeneBioTypeFilter("TR_C_gene"),
+        filters.GeneNameFilter("TSPAN6"),
     ],
 )
 def test_equality_filter_single(hsapiens108, filt):
@@ -29,6 +30,7 @@ def test_equality_filter_single(hsapiens108, filt):
     [
         filters.GeneIDFilter(["ENSG00000000003", "ENSG00000093183"]),
         filters.GeneBioTypeFilter(["TR_J_gene", "TR_V_gene"]),
+        filters.GeneNameFilter(["TSPAN6", "TNMD"]),
     ],
 )
 def test_equality_filter_list(hsapiens108, filt):
