@@ -81,7 +81,7 @@ def test_multiple_table_subsetting(hsapiens108):
         join_type="inner",
         filter=gf.filters.GeneBioTypeFilter(["protein_coding"]),
     )
-    assert result.shape == (188553, 4)
+    assert result.shape == (185904, 4)
     assert list(result.columns) == ["gene_id", "gene_name", "tx_id", "gene_biotype"]
 
     # table genes, transcripts and exons and filter

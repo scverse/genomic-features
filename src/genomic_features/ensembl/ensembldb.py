@@ -6,7 +6,6 @@ import pandas as pd
 from genomic_features._core import filters
 from genomic_features._core.cache import retrieve_annotation
 
-
 BIOC_ANNOTATION_HUB_URL = (
     "https://bioconductorhubs.blob.core.windows.net/annotationhub/"
 )
@@ -30,20 +29,13 @@ def annotation(species: str, version: str | int):
     EnsemblDB
         The annotation database.
     """
-    db = ibis.duckdb.connect()
-    pth = str(
-        retrieve_annotation(
-            ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
+    return EnsemblDB(
+        ibis.sqlite.connect(
+            retrieve_annotation(
+                ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
+            )
         )
     )
-    db.raw_sql(
-        f"""
-    INSTALL sqlite;
-    LOAD sqlite;
-    CALL sqlite_attach('{pth}');
-    """
-    )
-    return EnsemblDB(db)
 
 
 class EnsemblDB:
@@ -59,7 +51,6 @@ class EnsemblDB:
         join_type: str = "inner",
     ) -> pd.DataFrame:
         """Get the genes table."""
-
         table = "gene"
         if cols is None:
             # TODO: check why R adds entrezid
@@ -84,10 +75,7 @@ class EnsemblDB:
         return self.db.table("chromosome").execute()
 
     def build_query(self, table, cols, filter, join_type="inner"):
-        """
-        Build a query for the genomic features table.
-        """
-
+        """Build a query for the genomic features table."""
         # check if join is required
         if len(self.tables_for_columns(cols)) > 1:
             query = self.join_query(cols, table, join_type)
@@ -98,9 +86,7 @@ class EnsemblDB:
         return query
 
     def join_query(self, cols, start_with, join_type="inner"):
-        """
-        Join tables and return a query.
-        """
+        """Join tables and return a query."""
         # check tables for join
         tables = self.tables_for_columns(cols, start_with=start_with)
         # TODO: check what ordering by degree does
@@ -115,9 +101,7 @@ class EnsemblDB:
         return query
 
     def inner_join_query(self, tables):
-        """
-        Join tables in inner join and return a query.
-        """
+        """Join tables in inner join and return a query."""
         # build query
         query = self.db.table(tables[0])
         for t in tables[1:]:
@@ -128,9 +112,7 @@ class EnsemblDB:
         return query
 
     def left_join_query(self, tables):
-        """
-        Join tables in left join and return a query.
-        """
+        """Join tables in left join and return a query."""
         # build query
         query = self.db.table(tables[0])
         for t in tables[1:]:
@@ -148,15 +130,11 @@ class EnsemblDB:
         return query
 
     def list_tables(self) -> list:
-        """
-        List all tables available in the genomic features database.
-        """
+        """List all tables available in the genomic features database."""
         return self.db.list_tables()
 
     def tables_by_degree(self, tab: list[str] = None) -> list:
-        """
-        Order tables available in the genomic features database.
-        """
+        """Order tables available in the genomic features database."""
         if tab is None:
             tab = self.list_tables()  # list of table names
         # check that all tables are in the database and print warning
@@ -184,10 +162,7 @@ class EnsemblDB:
         return sorted(tab, key=lambda x: table_order[x])
 
     def list_columns(self, table=None) -> list:
-        """
-        List all columns available in the genomic features table.
-        """
-
+        """List all columns available in the genomic features table."""
         if table is None:
             table = self.db.list_tables()  # list of table names
         else:
@@ -198,9 +173,7 @@ class EnsemblDB:
         return columns
 
     def clean_columns(self, columns) -> list:
-        """
-        Clean a list of columns to make sure they are valid.
-        """
+        """Clean a list of columns to make sure they are valid."""
         valid_columns = self.list_columns()
         columns = [c for c in columns if c in valid_columns]
         unvalid_columns = [c for c in columns if c not in valid_columns]
@@ -216,6 +189,13 @@ class EnsemblDB:
     def tables_for_columns(self, cols: list, start_with: str = None) -> list:
         """
         Return a list of tables that contain the specified columns.
+
+        Parameters
+        ----------
+        cols
+            Columns that we're looking for
+        start_with
+            Primary table being queried
         """
         cols = self.clean_columns(cols)
         table_list = self.tables_by_degree()  # list of table names
@@ -237,9 +217,9 @@ class EnsemblDB:
                 return tables
             else:
                 # check if a single column is in the table
-                for c in cols:
+                for c in cols.copy():
                     if c in self.db.table(t).columns:
-                        tables.append(t)
+                        if t not in tables:
+                            tables.append(t)
                         cols.remove(c)  # remove column from list
-                        break
         return tables
