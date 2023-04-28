@@ -30,32 +30,31 @@ def test_tables_by_degree(hsapiens108):
 
 def test_list_columns(hsapiens108):
     result = hsapiens108.list_columns("gene")
-    assert len(result) == len(hsapiens108.genes().columns)
-    assert hsapiens108.genes().columns.isin(result).all()
+    assert result == list(hsapiens108.db.table("gene").columns)
 
 
 def test_clean_columns(hsapiens108):
+    result = hsapiens108.clean_columns("gene_id")
+    assert result == ["gene_id"]
     result = hsapiens108.clean_columns(["gene_id", "gene_name"])
     assert result == ["gene_id", "gene_name"]
-    result = hsapiens108.clean_columns(["gene_id", "invalid_column"])
-    assert result == ["gene_id"]
     with pytest.raises(ValueError):
-        hsapiens108.clean_columns(["invalid_column"])
+        hsapiens108.clean_columns(["gene_id", "invalid_column"])
     with pytest.raises(ValueError):
         hsapiens108.clean_columns([])
 
 
 def test_tables_for_columns(hsapiens108):
-    result = hsapiens108.tables_for_columns(["gene_id", "gene_name"], start_with="gene")
+    result = hsapiens108.tables_for_columns(["gene_id"])
     assert result == ["gene"]
-    result = hsapiens108.tables_for_columns(["gene_id", "tx_id"])
+
+
+def test_required_tables(hsapiens108):
+    result = hsapiens108.get_required_tables(["gene", "tx"])
     assert result == ["gene", "tx"]
-    result = hsapiens108.tables_for_columns(["gene_name", "invalid_column"])
-    assert result == ["gene"]
-    with pytest.raises(ValueError):
-        hsapiens108.tables_for_columns(["invalid_column"])
-    with pytest.raises(ValueError):
-        hsapiens108.tables_for_columns([])
+    # case where we need intermediate tables
+    result = hsapiens108.get_required_tables(["gene", "protein"])
+    assert result == ["gene", "tx", "protein"]
 
 
 # Test simple subsetting to columns in one table gene
@@ -86,30 +85,28 @@ def test_multiple_table_subsetting(hsapiens108):
 
     # table genes, transcripts and exons and filter
     result = hsapiens108.genes(
-        cols=["gene_id", "gene_name", "tx_id", "exon_id"],
+        cols=["gene_id", "gene_name", "exon_id"],
         join_type="inner",
         filter=gf.filters.GeneIDFilter(["ENSG00000139618"]),
     )
 
-    assert result.shape == (186, 4)
-    assert list(result.columns) == ["gene_id", "gene_name", "tx_id", "exon_id"]
+    assert result.shape == (186, 3)
+    assert list(result.columns) == ["gene_id", "gene_name", "exon_id"]
 
-
-# def test_left_join(hsapiens108):
-#     # test left join
-#     # table genes and transcripts
-#     result = hsapiens108.genes(
-#         cols=["gene_id", "gene_name", "protein_id"],
-#         join_type="left",
-#         filter=gf.filters.GeneBioTypeFilter(["protein_coding"]),
-#     )
-#     assert result.shape == (275721, 3)
-#     assert list(result.columns) == [
-#         "gene_id",
-#         "gene_name",
-#         "protein_id",
-#         "gene_biotype",
-#     ]
-#     assert (
-#         result.loc[result.gene_biotype != "protein_coding", "protein_id"].isna().all()
-#     )
+    # test left join
+    # table genes and transcripts
+    result = hsapiens108.genes(
+        cols=["gene_id", "gene_name", "protein_id"],
+        join_type="left",
+        filter=gf.filters.GeneBioTypeFilter(["protein_coding"]),
+    )
+    assert result.shape == (185904, 4)
+    assert list(result.columns) == [
+        "gene_id",
+        "gene_name",
+        "protein_id",
+        "gene_biotype",
+    ]
+    assert (
+        result.loc[result.gene_biotype != "protein_coding", "protein_id"].isna().all()
+    )

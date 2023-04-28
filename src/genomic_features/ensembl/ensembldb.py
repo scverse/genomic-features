@@ -77,20 +77,22 @@ class EnsemblDB:
     def build_query(self, table, cols, filter, join_type="inner"):
         """Build a query for the genomic features table."""
         # check if join is required
-        if len(self.tables_for_columns(cols)) > 1:
-            query = self.join_query(cols, table, join_type)
+        tables = self.get_required_tables(self.tables_for_columns(cols))
+        if len(tables) > 1:
+            query = self.join_query(tables, start_with=table, join_type=join_type)
         else:
             query = self.db.table(table)
         # add filter
         query = query.filter(filter.convert()).select(cols)
         return query
 
-    def join_query(self, cols, start_with, join_type="inner"):
+    def join_query(self, tables, start_with, join_type="inner"):
         """Join tables and return a query."""
-        # check tables for join
-        tables = self.tables_for_columns(cols, start_with=start_with)
-        # TODO: check what ordering by degree does
+        # check for intermediate tables
 
+        tables.remove(start_with)
+        tables = [start_with] + tables
+        print(tables)
         if join_type == "inner":
             query = self.inner_join_query(tables)
         elif join_type == "left":
@@ -161,30 +163,63 @@ class EnsemblDB:
 
         return sorted(tab, key=lambda x: table_order[x])
 
-    def list_columns(self, table=None) -> list:
+    def get_required_tables(self, tab):
+        # If we have exon and any other table, we need definitely tx2exon
+        if "exon" in tab and len(tab) > 1:
+            tab = list(set(tab + ["tx2exon"]))
+
+        # If we have chromosome and any other table, we'll need gene
+        if "chromosome" in tab and len(tab) > 1:
+            tab = list(set(tab + ["gene"]))
+
+        # If we have exon and we have gene, we'll need also tx
+        if ("exon" in tab or "tx2exon" in tab) and "gene" in tab:
+            tab = list(set(tab + ["tx"]))
+
+        # Resolve the proteins: need tx to map between proteome and genome
+        if any(t in ["uniprot", "protein_domain", "protein"] for t in tab) and any(
+            t in ["exon", "tx2exon", "gene", "chromosome", "entrezgene"] for t in tab
+        ):
+            tab = list(set(tab + ["tx"]))
+
+        # Need protein.
+        if any(t in ["uniprot", "protein_domain"] for t in tab) and any(
+            t in ["exon", "tx2exon", "tx", "gene", "chromosome", "entrezgene"]
+            for t in tab
+        ):
+            tab = list(set(tab + ["protein"]))
+
+        # entrezgene is only linked via gene
+        if "entrezgene" in tab and len(tab) > 1:
+            tab = list(set(tab + ["gene"]))
+
+        return self.tables_by_degree(tab)
+
+    def list_columns(self, tables=None) -> list:
         """List all columns available in the genomic features table."""
-        if table is None:
-            table = self.db.list_tables()  # list of table names
-        else:
-            table = [table]  # list of tables names (only one)
+        if tables is None:
+            tables = self.db.list_tables()  # list of table names
+        elif isinstance(tables, str):
+            tables = [tables]  # list of tables names (only one)
         columns = []
-        for t in table:
-            columns += self.db.table(t).columns
+        columns = [c for t in tables for c in self.db.table(t).columns]
         return columns
 
     def clean_columns(self, columns) -> list:
         """Clean a list of columns to make sure they are valid."""
-        valid_columns = self.list_columns()
-        columns = [c for c in columns if c in valid_columns]
-        unvalid_columns = [c for c in columns if c not in valid_columns]
+        if isinstance(columns, str):
+            columns = [columns]
 
-        if len(unvalid_columns) > 0:
-            print("The following columns are not valid and will be ignored:")
-            print(unvalid_columns)
-
-        if len(columns) == 0:
+        valid_columns = set(self.list_columns())
+        cols = list(filter(lambda c: c in valid_columns, columns))
+        invalid_columns = set(columns) - valid_columns
+        if invalid_columns:
+            raise ValueError(
+                f"The following columns are not found in any database: {invalid_columns}"
+            )
+        if not cols:
             raise ValueError("No valid columns were found.")
-        return columns
+        return cols
 
     def tables_for_columns(self, cols: list, start_with: str = None) -> list:
         """
@@ -193,9 +228,7 @@ class EnsemblDB:
         Parameters
         ----------
         cols
-            Columns that we're looking for
-        start_with
-            Primary table being queried
+            Columns that we're looking for.
         """
         cols = self.clean_columns(cols)
         table_list = self.tables_by_degree()  # list of table names
