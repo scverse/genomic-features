@@ -17,7 +17,7 @@ authors = [
 maintainers = [
     {name = "Isaac Virshup", email = "ivirshup@gmail.com"},
     {name = "Emma Dann", email = "ed6@sanger.ac.uk"},
-    {name = "Laura Martens", email ="laura.martens@helmholtz-munich.de"},
+    {name = "Laura Martens", email = "laura.d.martens@icloud.com"},
 ]
 urls.Documentation = "https://genomic-features.readthedocs.io/"
 urls.Source = "https://github.com/scverse/genomic-features"
