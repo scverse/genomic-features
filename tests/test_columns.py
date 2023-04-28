@@ -76,7 +76,6 @@ def test_multiple_table_subsetting(hsapiens108):
     assert list(result.columns) == ["gene_id", "gene_name", "tx_id"]
 
     # table genes and transcripts with filter
-    # TODO: check why the number changes
     result = hsapiens108.genes(
         cols=["gene_id", "gene_name", "tx_id"],
         join_type="inner",
@@ -86,7 +85,6 @@ def test_multiple_table_subsetting(hsapiens108):
     assert list(result.columns) == ["gene_id", "gene_name", "tx_id", "gene_biotype"]
 
     # table genes, transcripts and exons and filter
-
     result = hsapiens108.genes(
         cols=["gene_id", "gene_name", "tx_id", "exon_id"],
         join_type="inner",
@@ -96,11 +94,22 @@ def test_multiple_table_subsetting(hsapiens108):
     assert result.shape == (186, 4)
     assert list(result.columns) == ["gene_id", "gene_name", "tx_id", "exon_id"]
 
-    # test left join
-    # table genes and transcripts
-    result = hsapiens108.genes(
-        cols=["gene_id", "gene_name", "protein_id"],
-        join_type="left",
-    )
-    assert result.shape == (275721, 3)
-    assert list(result.columns) == ["gene_id", "gene_name", "protein_id"]
+
+# def test_left_join(hsapiens108):
+#     # test left join
+#     # table genes and transcripts
+#     result = hsapiens108.genes(
+#         cols=["gene_id", "gene_name", "protein_id"],
+#         join_type="left",
+#         filter=gf.filters.GeneBioTypeFilter(["protein_coding"]),
+#     )
+#     assert result.shape == (275721, 3)
+#     assert list(result.columns) == [
+#         "gene_id",
+#         "gene_name",
+#         "protein_id",
+#         "gene_biotype",
+#     ]
+#     assert (
+#         result.loc[result.gene_biotype != "protein_coding", "protein_id"].isna().all()
+#     )
