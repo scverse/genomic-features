@@ -4,7 +4,7 @@ requires = ["hatchling"]
 
 [project]
 name = "genomic-features"
-version = "0.0.1"
+version = "0.0.1.a0"
 description = "Genomic annotations using BioConductor resources in Python."
 readme = "README.md"
 requires-python = ">=3.9"

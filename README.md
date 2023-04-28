@@ -9,17 +9,13 @@
 
 Genomic annotations using BioConductor resources in Python.
 
-Very in-progress. Design doc being developed here: https://hackmd.io/@ivirshup/HJGmhT7Qn
-
 ## Getting started
 
-Please refer to the [documentation][link-docs]. In particular, the
-
--   [API documentation][link-api].
+Please refer to the [documentation][link-docs].
 
 ## Installation
 
-You need to have Python 3.8 or newer installed on your system. If you don't have
+You need to have Python 3.9 or newer installed on your system. If you don't have
 Python installed, we recommend installing [Mambaforge](https://github.com/conda-forge/miniforge#mambaforge).
 
 There are several alternative options to install genomic-features:
@@ -32,7 +28,9 @@ pip install genomic-features
 ```
 -->
 
-1. Install the latest development version:
+### Development install
+
+To install the latest development version:
 
 ```bash
 pip install git+https://github.com/scverse/genomic-features.git@main
