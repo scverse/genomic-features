@@ -23,7 +23,6 @@ dependencies = [
     "pooch",
     "pandas",
     "pyarrow",
-    "anndata",
     # for debug logging (referenced from the issue template)
     "session-info"
 ]
@@ -49,6 +48,7 @@ doc = [
 test = [
     "pytest",
     "pytest-cov",
+    "anndata"
 ]
 
 [tool.coverage.run]
