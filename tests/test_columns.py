@@ -76,6 +76,7 @@ def test_multiple_table_subsetting(hsapiens108):
     assert list(result.columns) == ["gene_id", "gene_name", "tx_id"]
 
     # table genes and transcripts with filter
+    # TODO: check why the number changes
     result = hsapiens108.genes(
         cols=["gene_id", "gene_name", "tx_id"],
         join_type="inner",
@@ -98,8 +99,8 @@ def test_multiple_table_subsetting(hsapiens108):
     # test left join
     # table genes and transcripts
     result = hsapiens108.genes(
-        cols=["gene_id", "gene_name", "tx_id"],
-        join_type="inner",
+        cols=["gene_id", "gene_name", "protein_id"],
+        join_type="left",
     )
     assert result.shape == (275721, 3)
     assert list(result.columns) == ["gene_id", "gene_name", "protein_id"]

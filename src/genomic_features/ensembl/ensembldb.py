@@ -53,12 +53,12 @@ class EnsemblDB:
     ) -> pd.DataFrame:
         """Get the genes table."""
 
-        return_cols = cols
         table = "gene"
         if cols is None:
             # TODO: check why R adds entrezid
             cols = self.list_columns(table)  # get all columns
 
+        return_cols = cols
         cols = self.clean_columns(cols)
         filter.required_tables()
         cols = list(set(cols) | filter.columns())  # add columns from filter
