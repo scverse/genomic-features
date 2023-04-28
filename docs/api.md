@@ -41,5 +41,6 @@
     _core.filters.AbstractFilterOperatorExpr
     _core.filters.AndFilterExpr
     _core.filters.OrFilterExpr
+    _core.filters.NotFilterExpr
     _core.filters.AbstractFilterEqualityExpr
 ```
