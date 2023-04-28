@@ -11,9 +11,13 @@ requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [
     {name = "Isaac Virshup"},
+    {name = "Emma Dann"},
+    {name = "Laura Martens"},
 ]
 maintainers = [
     {name = "Isaac Virshup", email = "ivirshup@gmail.com"},
+    {name = "Emma Dann", email = "ed6@sanger.ac.uk"},
+    {name = "Laura Martens", email ="laura.martens@helmholtz-munich.de"},
 ]
 urls.Documentation = "https://genomic-features.readthedocs.io/"
 urls.Source = "https://github.com/scverse/genomic-features"
