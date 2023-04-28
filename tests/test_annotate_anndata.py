@@ -67,9 +67,9 @@ def test_unique_ids(genes, adata):
             ]
         ),
     )
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         gf.annotate_anndata(adata_duplicate_genes.var, genes)
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         gf.annotate_anndata(adata.var, genes, id_column="gene_name")
 
 
