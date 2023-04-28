@@ -102,24 +102,29 @@ class AbstractFilterRangeExpr(AbstractFilterExpr):
         return f"{self.__class__.__name__}({self.value})"
 
     def convert(self) -> ibis.expr.deferred.Deferred:
-        range_seq_name, range_coords = self.value.split(":")
-        range_start, range_end = range_coords.split("-")
+        try:
+            range_seq_name, range_coords = self.value.split(":")
+            range_start, range_end = range_coords.split("-")
+        except ValueError:
+            raise ValueError(
+                "Invalid range format. Valid format is 'seq_name:start-end'"
+            )
         start_column, end_column, seq_name_column = list(self.columns())
         if self.type == "any":
             return (ibis.deferred[seq_name_column] == range_seq_name) & (
                 (
-                    (ibis.deferred[end_column] > int(range_start))
-                    & (ibis.deferred[end_column] < int(range_end))
+                    (ibis.deferred[end_column] >= int(range_start))
+                    & (ibis.deferred[end_column] <= int(range_end))
                 )
                 | (
-                    (ibis.deferred[start_column] > int(range_start))
-                    & (ibis.deferred[start_column] < int(range_end))
+                    (ibis.deferred[start_column] >= int(range_start))
+                    & (ibis.deferred[start_column] <= int(range_end))
                 )
             )
         elif self.type == "within":
             return (ibis.deferred[seq_name_column] == range_seq_name) & (
-                (ibis.deferred[end_column] < int(range_end))
-                & (ibis.deferred[start_column] > int(range_start))
+                (ibis.deferred[end_column] <= int(range_end))
+                & (ibis.deferred[start_column] >= int(range_start))
             )
         else:
             raise ValueError(

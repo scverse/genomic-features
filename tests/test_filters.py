@@ -97,9 +97,20 @@ def test_range_filter(hsapiens108):
         any_overlap_filter.seq_name == "1"
     )
     assert any_overlap_filter.shape[0] > within_overlap_filter.shape[0]
-    assert (all(within_overlap_filter.gene_seq_start > 77000000)) & (
-        all(within_overlap_filter.gene_seq_end < 78000000)
+    assert (all(within_overlap_filter.gene_seq_start >= 77000000)) & (
+        all(within_overlap_filter.gene_seq_end <= 78000000)
     )
     assert (all(any_overlap_filter.gene_seq_end >= 77000000)) & (
         all(any_overlap_filter.gene_seq_start <= 78000000)
     )
+    # Test input
+    with pytest.raises(ValueError):
+        hsapiens108.genes(filter=filters.RangesFilter("1_77000000_78000000"))
+
+    with pytest.raises(ValueError):
+        hsapiens108.genes(filter=filters.RangesFilter("1-77000000-78000000"))
+
+    with pytest.raises(ValueError):
+        hsapiens108.genes(
+            filter=filters.RangesFilter("1:77000000-78000000", type="start")
+        )
