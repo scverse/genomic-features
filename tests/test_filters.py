@@ -114,3 +114,22 @@ def test_range_filter(hsapiens108):
         hsapiens108.genes(
             filter=filters.RangesFilter("1:77000000-78000000", type="start")
         )
+
+
+def test_negation(hsapiens108):
+    result = hsapiens108.genes(filter=~filters.GeneBioTypeFilter("protein_coding"))
+    assert "protein_coding" not in result["gene_biotype"]
+
+    result = hsapiens108.genes(
+        filter=filters.GeneIDFilter("ENSG00000000003")
+        & ~filters.GeneBioTypeFilter("protein_coding")
+    )
+    assert result.shape[0] == 0
+
+    result = hsapiens108.genes(
+        filter=~filters.GeneIDFilter("ENSG00000000003")
+        & filters.GeneBioTypeFilter("protein_coding")
+    )
+    assert {"protein_coding"} == set(result["gene_biotype"])
+    assert "ENSG00000000003" not in result["gene_id"]
+    assert result.shape[0] == 22894
