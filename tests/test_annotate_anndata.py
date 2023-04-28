@@ -15,18 +15,19 @@ adata = AnnData(
 )
 
 
-def test_output():
-    adata_var = gf.annotate_anndata(adata.var, genes)
-    assert isinstance(adata_var, pd.DataFrame)
+@pytest.fixture(scope="module")
+def annotated_adata_var():
+    return gf.annotate_anndata(adata.var, genes)
+
+def test_output(annotated_adata_var):
+    assert isinstance(annotated_adata_var, pd.DataFrame)
 
 
-def test_size():
-    annotated_adata_var = gf.annotate_anndata(adata.var, genes)
+def test_size(annotated_adata_var):
     assert annotated_adata_var.shape[0] == adata.n_vars
 
 
-def test_var_names():
-    annotated_adata_var = gf.annotate_anndata(adata.var, genes)
+def test_var_names(annotated_adata_var):
     assert "var_names" not in annotated_adata_var
     assert annotated_adata_var.index.equals(adata.var.index)
     assert annotated_adata_var.index.name == adata.var.index.name
