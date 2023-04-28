@@ -2,10 +2,13 @@
 
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
+[![PyPI][badge-pypi]][link-pypi]
 
 [badge-tests]: https://img.shields.io/github/actions/workflow/status/scverse/genomic-features/test.yaml?branch=main
 [link-tests]: https://github.com/scverse/genomic-features/actions/workflows/test.yml
 [badge-docs]: https://img.shields.io/readthedocs/genomic-features
+[badge-pypi]: https://img.shields.io/pypi/v/genomic-features
+[link-pypi]: https://pypi.org/project/genomic-features
 
 Genomic annotations using BioConductor resources in Python.
 
