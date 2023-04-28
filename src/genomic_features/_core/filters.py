@@ -81,6 +81,18 @@ class AbstractFilterEqualityExpr(AbstractFilterExpr):
         else:
             return ibis.deferred[list(self.columns())[0]].isin(self.value)
 
+class AbstractFilterRangeExpr(AbstractFilterExpr):
+    def __init__(self, value: str ):
+        self.value = value
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.value})"
+
+    def convert(self) -> ibis.expr.deferred.Deferred:
+        range_start, range_end = self.value.split(":")
+        start_column, end_column, seq_name_column = list(self.columns())
+        return ibis.deferred[list(self.columns())[0]] == self.value
+        
 
 class GeneIDFilter(AbstractFilterEqualityExpr):
     def columns(self) -> set[str]:
@@ -94,6 +106,21 @@ class GeneIDFilter(AbstractFilterEqualityExpr):
 class GeneBioTypeFilter(AbstractFilterEqualityExpr):
     def columns(self) -> set[str]:
         return {"gene_biotype"}
+
+    def required_tables(self) -> set[str]:
+        return {"gene"}
+    
+class RangesFilter(AbstractFilterEqualityExpr):
+    '''
+    Filter features within a genomic range
+
+    Parameters
+    ----------
+    value : str
+        Genomic range in the format "seq_name:start-end"
+    '''
+    def columns(self) -> set[str]:
+        return {"gene_seq_start", "gene_seq_end", "seq_name"}
 
     def required_tables(self) -> set[str]:
         return {"gene"}
