@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import cached_property
+
 import ibis
 import requests
 from ibis import _
@@ -113,6 +115,16 @@ class EnsemblDB:
 
     def __init__(self, connection: ibis.BaseBackend):
         self.db = connection
+
+    @cached_property
+    def metadata(self) -> dict:
+        """Metadata for the database (e.g. who built it, when, with what resource)."""
+        metadata_tbl = self.db.table("metadata").execute()
+        return dict(zip(metadata_tbl["name"], metadata_tbl["value"]))
+
+    def __repr__(self) -> str:
+        d = self.metadata
+        return f"EnsemblDB(organism='{d['Organism']}', ensembl_release='{d['ensembl_version']}')"
 
     def genes(
         self, filter: _filters.AbstractFilterExpr = filters.EmptyFilter()
