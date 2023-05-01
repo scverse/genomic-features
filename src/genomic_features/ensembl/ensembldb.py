@@ -1,4 +1,5 @@
 from __future__ import annotations
+import warnings
 
 import ibis
 import requests
@@ -212,9 +213,11 @@ class EnsemblDB:
             tab = self.list_tables()  # list of table names
         # check that all tables are in the database and print warning
         if not set(tab).issubset(set(self.list_tables())):
-            print(
-                f"Warning: tables {set(tab) - set(self.list_tables())} are not in the database."
+            missing_tables = ", ".join(set(tab) - set(self.list_tables()))
+            warnings.warn(
+                f"The following tables are not in the database: {missing_tables}."
             )
+
             tab = list(set(tab) & set(self.list_tables()))  # remove tables not in db
 
         # order tables
