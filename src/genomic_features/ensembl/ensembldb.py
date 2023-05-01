@@ -163,7 +163,6 @@ class EnsemblDB:
 
         tables.remove(start_with)
         tables = [start_with] + tables
-        print(tables)
         if join_type == "inner":
             query = self.inner_join_query(tables)
         elif join_type == "left":
