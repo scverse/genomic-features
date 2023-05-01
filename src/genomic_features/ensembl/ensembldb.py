@@ -128,6 +128,7 @@ class EnsemblDB:
             cols = self.list_columns(table)  # get all columns
 
         return_cols = cols
+        cols = list(set(cols + ["gene_id"]))  # genes always needs gene_id
         cols = self.clean_columns(cols)
         filter.required_tables()
         cols = list(set(cols) | filter.columns())  # add columns from filter
