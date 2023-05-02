@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 
 import ibis
@@ -135,13 +136,12 @@ class AbstractFilterRangeExpr(AbstractFilterExpr):
         return f"{self.__class__.__name__}({self.value})"
 
     def convert(self) -> ibis.expr.deferred.Deferred:
-        try:
-            range_seq_name, range_coords = self.value.split(":")
-            range_start, range_end = range_coords.split("-")
-        except ValueError:
+        match = re.match(r"^(\w+):(\d+)-(\d+)$", self.value)
+        if match is None:
             raise ValueError(
-                "Invalid range format. Valid format is 'seq_name:start-end'"
+                "Invalid range format. Valid format is '{seq_name}:{start}-{end}'"
             )
+        range_seq_name, range_start, range_end = match.groups()
         start_column, end_column, seq_name_column = list(self.columns())
         if self.type == "any":
             return (ibis.deferred[seq_name_column] == range_seq_name) & (
