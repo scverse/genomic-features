@@ -58,6 +58,7 @@ class AbstractFilterOperatorExpr(AbstractFilterExpr):
     def required_tables(self) -> set[str]:
         return self.left.required_tables() & self.right.required_tables()
 
+
     def columns(self) -> set[str]:
         return self.left.columns() | self.right.columns()
 
