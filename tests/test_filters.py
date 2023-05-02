@@ -20,6 +20,7 @@ def hsapiens108():
         filters.GeneNameFilter("TSPAN6"),
         filters.SeqFilter("1"),
         filters.SeqFilter("MT"),
+        filters.UniProtIDFilter("F5H4R2.65"),
     ],
 )
 def test_equality_filter_single(hsapiens108, filt):
@@ -34,6 +35,7 @@ def test_equality_filter_single(hsapiens108, filt):
         filters.GeneBioTypeFilter(["TR_J_gene", "TR_V_gene"]),
         filters.GeneNameFilter(["TSPAN6", "TNMD"]),
         filters.SeqFilter(["1", "2"]),
+        filters.UniProtIDFilter(["A0A804HIK9.2", "G5E9P6.85"]),
     ],
 )
 def test_equality_filter_list(hsapiens108, filt):

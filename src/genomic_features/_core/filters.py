@@ -236,6 +236,22 @@ class SeqFilter(AbstractFilterEqualityExpr):
         return set()
 
 
+class UniProtIDFilter(AbstractFilterEqualityExpr):
+    """Filter by UniProt ID.
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.UniProtIDFilter("P12345"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"uniprot_id"}
+
+    def required_tables(self) -> set[str]:
+        return {"uniprot"}
+
+
 # class GeneIDFilter(AbstractFilterExpr):
 #     def __init__(self, gene_id: str | list[str]):
 #         self.gene_id = gene_id

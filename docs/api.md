@@ -28,6 +28,7 @@
     filters.GeneNameFilter
     filters.SeqFilter
     filters.GeneRangesFilter
+    filters.UniProtIDFilter
     filters.EmptyFilter
 ```
 
