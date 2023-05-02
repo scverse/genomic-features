@@ -28,6 +28,7 @@
     filters.GeneNameFilter
     filters.SeqFilter
     filters.GeneRangesFilter
+    filters.CanonicalFilter
     filters.UniProtIDFilter
     filters.UniProtDBFilter
     filters.UniProtMappingTypeFilter

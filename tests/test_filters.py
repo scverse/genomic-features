@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 
 import genomic_features as gf
@@ -45,6 +46,26 @@ def test_equality_filter_single(hsapiens108, filt):
 def test_equality_filter_list(hsapiens108, filt):
     result = hsapiens108.genes(filter=filt)[list(filt.columns())[0]]
     assert set(result) == set(filt.value)
+
+
+def test_canonical(hsapiens108):
+    result = hsapiens108.genes(
+        cols=["tx_id", "canonical_transcript"], filter=filters.CanonicalFilter()
+    )
+
+    assert result["tx_is_canonical"].sum() == result.shape[0]
+    pd.testing.assert_series_equal(
+        result["tx_id"].rename("canonical_transcript"), result["canonical_transcript"]
+    )
+
+    result_non_canonical = hsapiens108.genes(
+        cols=["tx_id", "canonical_transcript"], filter=~filters.CanonicalFilter()
+    )
+
+    assert result_non_canonical["tx_is_canonical"].sum() == 0
+    assert (
+        result_non_canonical["canonical_transcript"] == result_non_canonical["tx_id"]
+    ).sum() == 0
 
 
 # These are not working quite as expected:

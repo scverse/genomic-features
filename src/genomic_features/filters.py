@@ -1,4 +1,5 @@
 from ._core.filters import (
+    CanonicalFilter,
     EmptyFilter,
     GeneBioTypeFilter,
     GeneIDFilter,
@@ -11,6 +12,7 @@ from ._core.filters import (
 )
 
 __all__ = [
+    "CanonicalFilter",
     "GeneIDFilter",
     "GeneBioTypeFilter",
     "GeneRangesFilter",

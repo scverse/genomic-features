@@ -236,6 +236,35 @@ class SeqFilter(AbstractFilterEqualityExpr):
         return set()
 
 
+class CanonicalFilter(AbstractFilterExpr):
+    """Filter for canonical transcripts.
+
+    Usage
+    -----
+
+    >>> ensdb.transcripts(filter=gf.filters.CanonicalFilter())
+    >>> ensdb.exons(
+    ...     cols=["tx_id", "exon_id", "seq_name", "exon_seq_start", "exon_seq_end"],
+    ...     filter=gf.filters.CanonicalFilter()
+    ... )
+    """
+
+    def __init__(self):
+        pass
+
+    def __repr__(self) -> str:
+        return "CanonicalFilter()"
+
+    def columns(self) -> set[str]:
+        return {"tx_is_canonical"}
+
+    def required_tables(self) -> set[str]:
+        return {"tx"}
+
+    def convert(self) -> ibis.expr.deferred.Deferred:
+        return ibis.deferred["tx_is_canonical"] == 1
+
+
 class UniProtIDFilter(AbstractFilterEqualityExpr):
     """Filter by UniProt ID.
 
