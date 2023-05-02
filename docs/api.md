@@ -29,6 +29,8 @@
     filters.SeqFilter
     filters.GeneRangesFilter
     filters.UniProtIDFilter
+    filters.UniProtDBFilter
+    filters.UniProtMappingTypeFilter
     filters.EmptyFilter
 ```
 

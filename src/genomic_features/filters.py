@@ -5,7 +5,9 @@ from ._core.filters import (
     GeneNameFilter,
     GeneRangesFilter,
     SeqFilter,
+    UniProtDBFilter,
     UniProtIDFilter,
+    UniProtMappingTypeFilter,
 )
 
 __all__ = [
@@ -16,4 +18,6 @@ __all__ = [
     "GeneNameFilter",
     "SeqFilter",
     "UniProtIDFilter",
+    "UniProtDBFilter",
+    "UniProtMappingTypeFilter",
 ]

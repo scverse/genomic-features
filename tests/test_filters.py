@@ -21,6 +21,8 @@ def hsapiens108():
         filters.SeqFilter("1"),
         filters.SeqFilter("MT"),
         filters.UniProtIDFilter("F5H4R2.65"),
+        filters.UniProtDBFilter("SWISSPROT"),
+        filters.UniProtMappingTypeFilter("SEQUENCE_MATCH"),
     ],
 )
 def test_equality_filter_single(hsapiens108, filt):
@@ -36,6 +38,8 @@ def test_equality_filter_single(hsapiens108, filt):
         filters.GeneNameFilter(["TSPAN6", "TNMD"]),
         filters.SeqFilter(["1", "2"]),
         filters.UniProtIDFilter(["A0A804HIK9.2", "G5E9P6.85"]),
+        filters.UniProtDBFilter(["SWISSPROT", "Uniprot_isoform"]),
+        filters.UniProtMappingTypeFilter(["DIRECT"]),  # Only two kinds in this DB
     ],
 )
 def test_equality_filter_list(hsapiens108, filt):

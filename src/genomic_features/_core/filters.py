@@ -252,6 +252,38 @@ class UniProtIDFilter(AbstractFilterEqualityExpr):
         return {"uniprot"}
 
 
+class UniProtDBFilter(AbstractFilterEqualityExpr):
+    """Filter by UniProt database.
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.UniProtDBFilter("SWISSPROT"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"uniprot_db"}
+
+    def required_tables(self) -> set[str]:
+        return {"uniprot"}
+
+
+class UniProtMappingTypeFilter(AbstractFilterEqualityExpr):
+    """Filter by UniProt mapping type.
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.UniProtMappingTypeFilter("DIRECT"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"uniprot_mapping_type"}
+
+    def required_tables(self) -> set[str]:
+        return {"uniprot"}
+
+
 # class GeneIDFilter(AbstractFilterExpr):
 #     def __init__(self, gene_id: str | list[str]):
 #         self.gene_id = gene_id
