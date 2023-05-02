@@ -146,6 +146,22 @@ class GeneNameFilter(AbstractFilterEqualityExpr):
         return {"gene"}
 
 
+class SeqFilter(AbstractFilterEqualityExpr):
+    """Filter by seq_name (e.g. chromosome).
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.SeqFilter("MT"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"seq_name"}
+
+    def required_tables(self) -> set[str]:
+        return set()
+
+
 # class GeneIDFilter(AbstractFilterExpr):
 #     def __init__(self, gene_id: str | list[str]):
 #         self.gene_id = gene_id
