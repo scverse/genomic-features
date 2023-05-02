@@ -142,7 +142,7 @@ class AbstractFilterRangeExpr(AbstractFilterExpr):
                 "Invalid range format. Valid format is '{seq_name}:{start}-{end}'"
             )
         range_seq_name, range_start, range_end = match.groups()
-        start_column, end_column, seq_name_column = list(self.columns())
+        start_column, end_column, seq_name_column = self._range_columns
         if self.type == "any":
             return (ibis.deferred[seq_name_column] == range_seq_name) & (
                 (
@@ -186,7 +186,7 @@ class GeneBioTypeFilter(AbstractFilterEqualityExpr):
         return {"gene"}
 
 
-class RangesFilter(AbstractFilterRangeExpr):
+class GeneRangesFilter(AbstractFilterRangeExpr):
     """
     Filter features within a genomic range
 
@@ -195,12 +195,16 @@ class RangesFilter(AbstractFilterRangeExpr):
     value : str
         Genomic range in the format "seq_name:start-end"
     type : str
-        String indicating how overlaps are to be filteres.
+        String indicating how overlaps are to be filters.
         Options are 'any' and 'within'. Default is 'any'
     """
 
-    def columns(self) -> set[str]:
+    @property
+    def _range_columns(self) -> list[str]:
         return ["gene_seq_start", "gene_seq_end", "seq_name"]
+
+    def columns(self) -> set[str]:
+        return set(self._range_columns)
 
     def required_tables(self) -> set[str]:
         return {"gene"}
