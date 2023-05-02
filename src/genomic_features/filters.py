@@ -3,12 +3,14 @@ from ._core.filters import (
     GeneBioTypeFilter,
     GeneIDFilter,
     GeneNameFilter,
+    GeneRangesFilter,
     SeqFilter,
 )
 
 __all__ = [
     "GeneIDFilter",
     "GeneBioTypeFilter",
+    "GeneRangesFilter",
     "EmptyFilter",
     "GeneNameFilter",
     "SeqFilter",
