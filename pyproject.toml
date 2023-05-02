@@ -124,6 +124,7 @@ convention = "numpy"
 "docs/*" = ["I"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
+"src/genomic_features/_core/filters.py" = ["D101", "D102"]  # Lots of inherited docstrings
 
 [tool.jupytext]
 formats = "ipynb,md"
