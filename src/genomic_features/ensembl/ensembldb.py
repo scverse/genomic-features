@@ -1,7 +1,8 @@
 from __future__ import annotations
-import warnings
 
+import warnings
 from functools import cached_property
+from pathlib import Path
 
 import ibis
 import requests
@@ -12,7 +13,6 @@ from requests.exceptions import HTTPError
 from genomic_features import filters
 from genomic_features._core import filters as _filters
 from genomic_features._core.cache import retrieve_annotation
-
 
 PKG_CACHE_DIR = "genomic-features"
 
@@ -75,7 +75,7 @@ def list_ensdb_annotations(species: None | str | list[str] = None) -> DataFrame:
         A table of available species and annotation versions in EnsDb.
     """
     # Get latest AnnotationHub timestamp
-    db_path = retrieve_annotation(ANNOTATION_HUB_URL)
+    db_path = Path(retrieve_annotation(ANNOTATION_HUB_URL))
     timestamp = requests.get(TIMESTAMP_URL).text
     ahdb = ibis.sqlite.connect(db_path)
     latest_ts = Timestamp(timestamp).replace(tzinfo=None)
@@ -131,9 +131,9 @@ class EnsemblDB:
     def genes(
         self,
         cols: list = None,
-        filter: filters.AbstractFilterExpr = filters.EmptyFilter(),
+        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
         join_type: str = "inner",
-    ) -> pd.DataFrame:
+    ) -> DataFrame:
         """Get the genes table."""
         table = "gene"
         if cols is None:
@@ -227,7 +227,9 @@ class EnsemblDB:
         if not set(tab).issubset(set(self.list_tables())):
             missing_tables = ", ".join(set(tab) - set(self.list_tables()))
             warnings.warn(
-                f"The following tables are not in the database: {missing_tables}."
+                f"The following tables are not in the database: {missing_tables}.",
+                UserWarning,
+                stacklevel=2,
             )
 
             tab = list(set(tab) & set(self.list_tables()))  # remove tables not in db
