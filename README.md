@@ -14,7 +14,7 @@ Genomic annotations using BioConductor resources in Python.
 
 ## Getting started
 
-Please refer to the [documentation][link-docs].
+Check out the [documentation][link-docs], in particular the [basic tutorial][link-basic-usage] and [API docs][link-api].
 
 ## Installation
 
@@ -54,6 +54,7 @@ If you found a bug, please use the [issue tracker][issue-tracker].
 
 [scverse-discourse]: https://discourse.scverse.org/
 [issue-tracker]: https://github.com/scverse/genomic-features/issues
-[changelog]: https://genomic-features.readthedocs.io/latest/changelog.html
+[changelog]: https://genomic-features.readthedocs.io/en/latest/changelog.html
 [link-docs]: https://genomic-features.readthedocs.io
-[link-api]: https://genomic-features.readthedocs.io/latest/api.html
+[link-api]: https://genomic-features.readthedocs.io/en/latest/api.html
+[link-basic-usage]: https://genomic-features.readthedocs.io/en/latest/notebooks/basic_usage.html
