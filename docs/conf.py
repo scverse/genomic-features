@@ -36,7 +36,7 @@ needs_sphinx = "4.0"
 
 html_context = {
     "display_github": True,  # Integrate GitHub
-    "github_user": "ivirshup",  # Username
+    "github_user": "scverse",  # Username
     "github_repo": project_name,  # Repo name
     "github_version": "main",  # Version
     "conf_py_path": "/docs/",  # Path in the checkout to the docs root
@@ -57,6 +57,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx.ext.mathjax",
     "IPython.sphinxext.ipython_console_highlighting",
+    "sphinxext.opengraph",
     *[p.stem for p in (HERE / "extensions").glob("*.py")],
 ]
 
@@ -118,6 +119,12 @@ html_theme_options = {
 }
 
 pygments_style = "default"
+
+# -- Social cards ---------------------------------------------------------
+
+ogp_site_url = "https://genomic-features.readthedocs.io/"
+
+# -- Warning control ---------------------------------------------------------
 
 nitpick_ignore = [
     # If building the documentation fails because of a missing link that is outside your control,
