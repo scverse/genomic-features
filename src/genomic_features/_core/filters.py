@@ -233,7 +233,7 @@ class SeqFilter(AbstractFilterEqualityExpr):
         return {"seq_name"}
 
     def required_tables(self) -> set[str]:
-        return set()
+        return {"gene"}
 
 
 class CanonicalFilter(AbstractFilterExpr):
