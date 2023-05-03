@@ -2,6 +2,7 @@
 
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
+[![codecov](https://codecov.io/gh/scverse/genomic-features/branch/main/graph/badge.svg?token=6QXsZewze7)](https://codecov.io/gh/scverse/genomic-features)
 [![PyPI][badge-pypi]][link-pypi]
 
 [badge-tests]: https://img.shields.io/github/actions/workflow/status/scverse/genomic-features/test.yaml?branch=main
