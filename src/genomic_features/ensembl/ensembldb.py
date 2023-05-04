@@ -3,6 +3,7 @@ from __future__ import annotations
 import warnings
 from functools import cached_property
 from pathlib import Path
+from typing import Literal
 
 import ibis
 import requests
@@ -132,7 +133,7 @@ class EnsemblDB:
         self,
         cols: list = None,
         filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
-        join_type: str = "inner",
+        join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
         """Get the genes table."""
         table = "gene"
@@ -143,7 +144,6 @@ class EnsemblDB:
         return_cols = cols
         cols = list(set(cols + ["gene_id"]))  # genes always needs gene_id
         cols = self.clean_columns(cols)
-        filter.required_tables()
         cols = list(set(cols) | filter.columns())  # add columns from filter
 
         query = self.build_query(table, cols, filter, join_type)
@@ -153,6 +153,38 @@ class EnsemblDB:
         # order columns
         return_cols = return_cols + [col for col in cols if col not in return_cols]
         result = result[return_cols]
+        return result
+
+    def transcripts(
+        self,
+        cols: list[str] | None = None,
+        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        join_type: Literal["inner", "left"] = "inner",
+    ) -> DataFrame:
+        """Get transcripts table.
+
+        Params
+        ------
+        cols
+            Columns to return, can be from other tables. Returns all transcript columns if None.
+        filter
+            Filter to apply to the query.
+        join_type
+            Type of join to use for the query.
+        """
+        table = "tx"
+        if cols is None:
+            cols = self.list_columns(table)  # get all columns
+        if "tx_id" not in cols:
+            cols.append("tx_id")
+        if ("tx_seq_start" in cols or "tx_seq_end" in cols) and "seq_name" not in cols:
+            cols.append("seq_name")
+        self.clean_columns(cols)
+
+        query = self.build_query(table, cols, filter, join_type)
+
+        result = query.execute()
+
         return result
 
     def chromosomes(self):
@@ -252,12 +284,13 @@ class EnsemblDB:
         return sorted(tab, key=lambda x: table_order[x])
 
     def get_required_tables(self, tab):
+        """Given tables, get all intermediate tables required to execute the query."""
         # If we have exon and any other table, we need definitely tx2exon
         if "exon" in tab and len(tab) > 1:
             tab = list(set(tab + ["tx2exon"]))
 
         # If we have chromosome and any other table, we'll need gene
-        if "chromosome" in tab and len(tab) > 1:
+        if "seq_name" in tab and len(tab) > 1:
             tab = list(set(tab + ["gene"]))
 
         # If we have exon and we have gene, we'll need also tx

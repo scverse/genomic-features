@@ -59,7 +59,6 @@ class AbstractFilterOperatorExpr(AbstractFilterExpr):
     def required_tables(self) -> set[str]:
         return self.left.required_tables() & self.right.required_tables()
 
-
     def columns(self) -> set[str]:
         return self.left.columns() | self.right.columns()
 
@@ -185,6 +184,26 @@ class GeneBioTypeFilter(AbstractFilterEqualityExpr):
 
     def required_tables(self) -> set[str]:
         return {"gene"}
+
+
+class TxIDFilter(AbstractFilterEqualityExpr):
+    """Filter by tx_id column."""
+
+    def columns(self) -> set[str]:
+        return {"tx_id"}
+
+    def required_tables(self) -> set[str]:
+        return {"tx"}
+
+
+class TxBioTypeFilter(AbstractFilterEqualityExpr):
+    """Filter by tx_biotype column."""
+
+    def columns(self) -> set[str]:
+        return {"tx_biotype"}
+
+    def required_tables(self) -> set[str]:
+        return {"tx"}
 
 
 class GeneRangesFilter(AbstractFilterRangeExpr):
