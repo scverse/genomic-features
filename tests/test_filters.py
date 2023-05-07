@@ -84,3 +84,52 @@ def test_or_filter(hsapiens108):
         ).shape[0]
         == 3
     )
+
+
+def test_range_filter(hsapiens108):
+    any_overlap_filter = hsapiens108.genes(
+        filter=filters.GeneRangesFilter("1:77000000-78000000")
+    )
+    within_overlap_filter = hsapiens108.genes(
+        filter=filters.GeneRangesFilter("1:77000000-78000000", type="within")
+    )
+    assert all(within_overlap_filter.seq_name == "1") & all(
+        any_overlap_filter.seq_name == "1"
+    )
+    assert any_overlap_filter.shape[0] > within_overlap_filter.shape[0]
+    assert (all(within_overlap_filter.gene_seq_start >= 77000000)) & (
+        all(within_overlap_filter.gene_seq_end <= 78000000)
+    )
+    assert (all(any_overlap_filter.gene_seq_end >= 77000000)) & (
+        all(any_overlap_filter.gene_seq_start <= 78000000)
+    )
+    # Test input
+    with pytest.raises(ValueError):
+        hsapiens108.genes(filter=filters.GeneRangesFilter("1_77000000_78000000"))
+
+    with pytest.raises(ValueError):
+        hsapiens108.genes(filter=filters.GeneRangesFilter("1-77000000-78000000"))
+
+    with pytest.raises(ValueError):
+        hsapiens108.genes(
+            filter=filters.GeneRangesFilter("1:77000000-78000000", type="start")
+        )
+
+
+def test_negation(hsapiens108):
+    result = hsapiens108.genes(filter=~filters.GeneBioTypeFilter("protein_coding"))
+    assert "protein_coding" not in result["gene_biotype"]
+
+    result = hsapiens108.genes(
+        filter=filters.GeneIDFilter("ENSG00000000003")
+        & ~filters.GeneBioTypeFilter("protein_coding")
+    )
+    assert result.shape[0] == 0
+
+    result = hsapiens108.genes(
+        filter=~filters.GeneIDFilter("ENSG00000000003")
+        & filters.GeneBioTypeFilter("protein_coding")
+    )
+    assert {"protein_coding"} == set(result["gene_biotype"])
+    assert "ENSG00000000003" not in result["gene_id"]
+    assert result.shape[0] == 22894

@@ -4,16 +4,20 @@ requires = ["hatchling"]
 
 [project]
 name = "genomic-features"
-version = "0.0.1"
+version = "0.0.1.a0"
 description = "Genomic annotations using BioConductor resources in Python."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [
     {name = "Isaac Virshup"},
+    {name = "Emma Dann"},
+    {name = "Laura Martens"},
 ]
 maintainers = [
     {name = "Isaac Virshup", email = "ivirshup@gmail.com"},
+    {name = "Emma Dann", email = "ed6@sanger.ac.uk"},
+    {name = "Laura Martens", email = "laura.d.martens@icloud.com"},
 ]
 urls.Documentation = "https://genomic-features.readthedocs.io/"
 urls.Source = "https://github.com/scverse/genomic-features"
@@ -44,6 +48,7 @@ doc = [
     "ipykernel",
     "ipython",
     "sphinx-copybutton",
+    "sphinxext.opengraph",
 ]
 test = [
     "pytest",
@@ -120,6 +125,7 @@ convention = "numpy"
 "docs/*" = ["I"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
+"src/genomic_features/_core/filters.py" = ["D101", "D102"]  # Lots of inherited docstrings
 
 [tool.jupytext]
 formats = "ipynb,md"

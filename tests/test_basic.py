@@ -16,3 +16,10 @@ def test_genes():
 def test_missing_version():
     with pytest.raises(ValueError):
         gf.ensembl.annotation("Hsapiens", 86)
+
+
+def test_repr():
+    result = repr(gf.ensembl.annotation("Hsapiens", 108))
+    expected = "EnsemblDB(organism='Homo sapiens', ensembl_release='108')"
+
+    assert result == expected
