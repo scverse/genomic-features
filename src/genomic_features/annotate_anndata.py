@@ -73,12 +73,12 @@ def annotate_anndata(
         index_name = adata_var_merge.index.name
         adata_var_merge = adata_var_merge.reset_index(names="var_names")
     else:
-        assert (
-            on in adata_var_merge.columns
-        ), "Column specified by `on` does not exist in adata_var_merge"
-        assert adata_var_merge[
-            on
-        ].is_unique, "Column specified by `on` does not contain unique IDs"
+        if on not in adata_var_merge.columns:
+            raise ValueError(
+                "Column specified by `on` does not exist in adata_var_merge"
+            )
+        if not adata_var_merge[on].is_unique:
+            raise ValueError("Column specified by `on` does not contain unique IDs")
         adata_var_merge["var_names"] = adata_var_merge[on].copy()
 
     # Merge
