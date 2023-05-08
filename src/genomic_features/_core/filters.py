@@ -166,7 +166,7 @@ class AbstractFilterRangeExpr(AbstractFilterExpr):
 
 
 class GeneIDFilter(AbstractFilterEqualityExpr):
-    """Filter by gene_id column."""
+    """Filter by gene_id."""
 
     def columns(self) -> set[str]:
         return {"gene_id"}
@@ -177,7 +177,7 @@ class GeneIDFilter(AbstractFilterEqualityExpr):
 
 
 class GeneBioTypeFilter(AbstractFilterEqualityExpr):
-    """Filter by gene_biotype column."""
+    """Filter by gene_biotype."""
 
     def columns(self) -> set[str]:
         return {"gene_biotype"}
@@ -206,6 +206,16 @@ class TxBioTypeFilter(AbstractFilterEqualityExpr):
         return {"tx"}
 
 
+class GeneNameFilter(AbstractFilterEqualityExpr):
+    """Filter by gene_name."""
+
+    def columns(self) -> set[str]:
+        return {"gene_name"}
+
+    def required_tables(self) -> set[str]:
+        return {"gene"}
+
+
 class GeneRangesFilter(AbstractFilterRangeExpr):
     """
     Filter features within a genomic range
@@ -228,6 +238,110 @@ class GeneRangesFilter(AbstractFilterRangeExpr):
 
     def required_tables(self) -> set[str]:
         return {"gene"}
+
+
+class SeqNameFilter(AbstractFilterEqualityExpr):
+    """Filter by seq_name (e.g. chromosome).
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.SeqNameFilter("MT"))
+    """
+
+    def __init__(self, value: str | int | list):
+        if isinstance(value, int):
+            value = str(value)
+        elif isinstance(value, str):
+            pass
+        else:
+            orig_value = value
+            value = [str(v) for v in orig_value]
+
+        self.value = value
+
+    def columns(self) -> set[str]:
+        return {"seq_name"}
+
+    def required_tables(self) -> set[str]:
+        return {"gene"}
+
+
+class CanonicalTxFilter(AbstractFilterExpr):
+    """Filter for canonical transcripts.
+
+    Usage
+    -----
+
+    >>> ensdb.transcripts(filter=gf.filters.CanonicalTxFilter())
+    >>> ensdb.exons(
+    ...     cols=["tx_id", "exon_id", "seq_name", "exon_seq_start", "exon_seq_end"],
+    ...     filter=gf.filters.CanonicalTxFilter()
+    ... )
+    """
+
+    def __init__(self):
+        pass
+
+    def __repr__(self) -> str:
+        return "CanonicalTxFilter()"
+
+    def columns(self) -> set[str]:
+        return {"tx_is_canonical"}
+
+    def required_tables(self) -> set[str]:
+        return {"tx"}
+
+    def convert(self) -> ibis.expr.deferred.Deferred:
+        return ibis.deferred["tx_is_canonical"] == 1
+
+
+class UniProtIDFilter(AbstractFilterEqualityExpr):
+    """Filter by UniProt ID.
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.UniProtIDFilter("P12345"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"uniprot_id"}
+
+    def required_tables(self) -> set[str]:
+        return {"uniprot"}
+
+
+class UniProtDBFilter(AbstractFilterEqualityExpr):
+    """Filter by UniProt database.
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.UniProtDBFilter("SWISSPROT"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"uniprot_db"}
+
+    def required_tables(self) -> set[str]:
+        return {"uniprot"}
+
+
+class UniProtMappingTypeFilter(AbstractFilterEqualityExpr):
+    """Filter by UniProt mapping type.
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.UniProtMappingTypeFilter("DIRECT"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"uniprot_mapping_type"}
+
+    def required_tables(self) -> set[str]:
+        return {"uniprot"}
 
 
 # class GeneIDFilter(AbstractFilterExpr):
