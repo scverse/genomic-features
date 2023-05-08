@@ -26,9 +26,9 @@
     filters.GeneIDFilter
     filters.GeneBioTypeFilter
     filters.GeneNameFilter
-    filters.SeqFilter
+    filters.SeqNameFilter
     filters.GeneRangesFilter
-    filters.CanonicalFilter
+    filters.CanonicalTxFilter
     filters.UniProtIDFilter
     filters.UniProtDBFilter
     filters.UniProtMappingTypeFilter

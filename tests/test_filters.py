@@ -19,8 +19,8 @@ def hsapiens108():
         filters.GeneBioTypeFilter("protein_coding"),
         filters.GeneBioTypeFilter("TR_C_gene"),
         filters.GeneNameFilter("TSPAN6"),
-        filters.SeqFilter("1"),
-        filters.SeqFilter("MT"),
+        filters.SeqNameFilter("1"),
+        filters.SeqNameFilter("MT"),
         filters.UniProtIDFilter("F5H4R2.65"),
         filters.UniProtDBFilter("SWISSPROT"),
         filters.UniProtMappingTypeFilter("SEQUENCE_MATCH"),
@@ -37,7 +37,7 @@ def test_equality_filter_single(hsapiens108, filt):
         filters.GeneIDFilter(["ENSG00000000003", "ENSG00000093183"]),
         filters.GeneBioTypeFilter(["TR_J_gene", "TR_V_gene"]),
         filters.GeneNameFilter(["TSPAN6", "TNMD"]),
-        filters.SeqFilter(["1", "2"]),
+        filters.SeqNameFilter(["1", "2"]),
         filters.UniProtIDFilter(["A0A804HIK9.2", "G5E9P6.85"]),
         filters.UniProtDBFilter(["SWISSPROT", "Uniprot_isoform"]),
         filters.UniProtMappingTypeFilter(["DIRECT"]),  # Only two kinds in this DB
@@ -50,7 +50,7 @@ def test_equality_filter_list(hsapiens108, filt):
 
 def test_canonical(hsapiens108):
     result = hsapiens108.genes(
-        cols=["tx_id", "canonical_transcript"], filter=filters.CanonicalFilter()
+        cols=["tx_id", "canonical_transcript"], filter=filters.CanonicalTxFilter()
     )
 
     assert result["tx_is_canonical"].sum() == result.shape[0]
@@ -59,7 +59,7 @@ def test_canonical(hsapiens108):
     )
 
     result_non_canonical = hsapiens108.genes(
-        cols=["tx_id", "canonical_transcript"], filter=~filters.CanonicalFilter()
+        cols=["tx_id", "canonical_transcript"], filter=~filters.CanonicalTxFilter()
     )
 
     assert result_non_canonical["tx_is_canonical"].sum() == 0
@@ -165,3 +165,16 @@ def test_negation(hsapiens108):
     assert {"protein_coding"} == set(result["gene_biotype"])
     assert "ENSG00000000003" not in result["gene_id"]
     assert result.shape[0] == 22894
+
+
+def test_seqs_as_int(hsapiens108):
+    result_w_int = hsapiens108.genes(filter=filters.SeqNameFilter(1))
+    result_w_str = hsapiens108.genes(filter=filters.SeqNameFilter("1"))
+    pd.testing.assert_frame_equal(result_w_int, result_w_str)
+
+    result_w_ints = hsapiens108.genes(filter=filters.SeqNameFilter([1, 2]))
+    result_w_strs = hsapiens108.genes(filter=filters.SeqNameFilter(["1", "2"]))
+    result_w_mixed = hsapiens108.genes(filter=filters.SeqNameFilter([1, "2"]))
+
+    pd.testing.assert_frame_equal(result_w_ints, result_w_strs)
+    pd.testing.assert_frame_equal(result_w_ints, result_w_mixed)

@@ -220,14 +220,25 @@ class GeneRangesFilter(AbstractFilterRangeExpr):
         return {"gene"}
 
 
-class SeqFilter(AbstractFilterEqualityExpr):
+class SeqNameFilter(AbstractFilterEqualityExpr):
     """Filter by seq_name (e.g. chromosome).
 
     Usage
     -----
 
-    >>> ensdb.genes(filter=gf.filters.SeqFilter("MT"))
+    >>> ensdb.genes(filter=gf.filters.SeqNameFilter("MT"))
     """
+
+    def __init__(self, value: str | int | list):
+        if isinstance(value, int):
+            value = str(value)
+        elif isinstance(value, str):
+            pass
+        else:
+            orig_value = value
+            value = [str(v) for v in orig_value]
+
+        self.value = value
 
     def columns(self) -> set[str]:
         return {"seq_name"}
@@ -236,16 +247,16 @@ class SeqFilter(AbstractFilterEqualityExpr):
         return {"gene"}
 
 
-class CanonicalFilter(AbstractFilterExpr):
+class CanonicalTxFilter(AbstractFilterExpr):
     """Filter for canonical transcripts.
 
     Usage
     -----
 
-    >>> ensdb.transcripts(filter=gf.filters.CanonicalFilter())
+    >>> ensdb.transcripts(filter=gf.filters.CanonicalTxFilter())
     >>> ensdb.exons(
     ...     cols=["tx_id", "exon_id", "seq_name", "exon_seq_start", "exon_seq_end"],
-    ...     filter=gf.filters.CanonicalFilter()
+    ...     filter=gf.filters.CanonicalTxFilter()
     ... )
     """
 
@@ -253,7 +264,7 @@ class CanonicalFilter(AbstractFilterExpr):
         pass
 
     def __repr__(self) -> str:
-        return "CanonicalFilter()"
+        return "CanonicalTxFilter()"
 
     def columns(self) -> set[str]:
         return {"tx_is_canonical"}

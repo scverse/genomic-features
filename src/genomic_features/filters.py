@@ -1,24 +1,24 @@
 from ._core.filters import (
-    CanonicalFilter,
+    CanonicalTxFilter,
     EmptyFilter,
     GeneBioTypeFilter,
     GeneIDFilter,
     GeneNameFilter,
     GeneRangesFilter,
-    SeqFilter,
+    SeqNameFilter,
     UniProtDBFilter,
     UniProtIDFilter,
     UniProtMappingTypeFilter,
 )
 
 __all__ = [
-    "CanonicalFilter",
+    "CanonicalTxFilter",
     "GeneIDFilter",
     "GeneBioTypeFilter",
     "GeneRangesFilter",
     "EmptyFilter",
     "GeneNameFilter",
-    "SeqFilter",
+    "SeqNameFilter",
     "UniProtIDFilter",
     "UniProtDBFilter",
     "UniProtMappingTypeFilter",
