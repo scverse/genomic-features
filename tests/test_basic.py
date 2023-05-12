@@ -23,3 +23,8 @@ def test_repr():
     expected = "EnsemblDB(organism='Homo sapiens', ensembl_release='108')"
 
     assert result == expected
+
+
+def test_invalid_join():
+    with pytest.raises(ValueError, match=r"Invalid join type: flarb"):
+        gf.ensembl.annotation("Hsapiens", 108).genes(cols=["tx_id"], join_type="flarb")
