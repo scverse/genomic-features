@@ -175,15 +175,24 @@ class EnsemblDB:
         table = "tx"
         if cols is None:
             cols = self.list_columns(table)  # get all columns
+
+        return_cols = cols.copy()
+        # Require primary key in output
         if "tx_id" not in cols:
             cols.append("tx_id")
+        # seq_name is required for genomic range operations
         if ("tx_seq_start" in cols or "tx_seq_end" in cols) and "seq_name" not in cols:
             cols.append("seq_name")
         self.clean_columns(cols)
 
+        cols = list(set(cols) | filter.columns())  # add columns from filter
+
         query = self.build_query(table, cols, filter, join_type)
 
         result = query.execute()
+
+        return_cols = return_cols + [col for col in cols if col not in return_cols]
+        result = result[return_cols]
 
         return result
 

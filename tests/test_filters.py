@@ -10,6 +10,14 @@ def hsapiens108():
     return gf.ensembl.annotation("Hsapiens", 108)
 
 
+@pytest.fixture(params=["genes", "transcripts"])
+def table_method(request):
+    def getter(db):
+        return getattr(db, request.param)
+
+    return getter
+
+
 @pytest.mark.parametrize(
     "filt",
     [
@@ -19,6 +27,8 @@ def hsapiens108():
         filters.GeneBioTypeFilter("protein_coding"),
         filters.GeneBioTypeFilter("TR_C_gene"),
         filters.GeneNameFilter("TSPAN6"),
+        filters.TxIDFilter("ENST00000513666"),
+        filters.TxBioTypeFilter("protein_coding"),
         filters.SeqNameFilter("1"),
         filters.SeqNameFilter("MT"),
         filters.UniProtIDFilter("F5H4R2.65"),
@@ -26,8 +36,9 @@ def hsapiens108():
         filters.UniProtMappingTypeFilter("SEQUENCE_MATCH"),
     ],
 )
-def test_equality_filter_single(hsapiens108, filt):
-    result = hsapiens108.genes(filter=filt)[list(filt.columns())[0]]
+def test_equality_filter_single(hsapiens108, filt, table_method):
+    func = table_method(hsapiens108)
+    result = func(filter=filt)[list(filt.columns())[0]]
     assert set(result) == {filt.value}
 
 
@@ -38,18 +49,22 @@ def test_equality_filter_single(hsapiens108, filt):
         filters.GeneBioTypeFilter(["TR_J_gene", "TR_V_gene"]),
         filters.GeneNameFilter(["TSPAN6", "TNMD"]),
         filters.SeqNameFilter(["1", "2"]),
+        filters.TxIDFilter(["ENST00000537657", "ENST00000341376"]),
+        filters.TxBioTypeFilter(["processed_pseudogene", "unprocessed_pseudogene"]),
         filters.UniProtIDFilter(["A0A804HIK9.2", "G5E9P6.85"]),
         filters.UniProtDBFilter(["SWISSPROT", "Uniprot_isoform"]),
         filters.UniProtMappingTypeFilter(["DIRECT"]),  # Only two kinds in this DB
     ],
 )
-def test_equality_filter_list(hsapiens108, filt):
-    result = hsapiens108.genes(filter=filt)[list(filt.columns())[0]]
+def test_equality_filter_list(hsapiens108, filt, table_method):
+    func = table_method(hsapiens108)
+    result = func(filter=filt)[list(filt.columns())[0]]
     assert set(result) == set(filt.value)
 
 
-def test_canonical(hsapiens108):
-    result = hsapiens108.genes(
+def test_canonical(hsapiens108, table_method):
+    func = table_method(hsapiens108)
+    result = func(
         cols=["tx_id", "canonical_transcript"], filter=filters.CanonicalTxFilter()
     )
 
@@ -58,7 +73,7 @@ def test_canonical(hsapiens108):
         result["tx_id"].rename("canonical_transcript"), result["canonical_transcript"]
     )
 
-    result_non_canonical = hsapiens108.genes(
+    result_non_canonical = func(
         cols=["tx_id", "canonical_transcript"], filter=~filters.CanonicalTxFilter()
     )
 

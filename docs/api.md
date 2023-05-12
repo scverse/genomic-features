@@ -28,6 +28,8 @@
     filters.GeneNameFilter
     filters.SeqNameFilter
     filters.GeneRangesFilter
+    filters.TxIDFilter
+    filters.TxBioTypeFilter
     filters.CanonicalTxFilter
     filters.UniProtIDFilter
     filters.UniProtDBFilter
