@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import warnings
 from functools import cached_property
+from itertools import product
 from pathlib import Path
 from typing import Literal
 
@@ -196,6 +197,49 @@ class EnsemblDB:
 
         return result
 
+    def exons(
+        self,
+        cols: list[str] | None = None,
+        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        join_type: Literal["inner", "left"] = "inner",
+    ) -> DataFrame:
+        """Get exons table.
+
+        Params
+        ------
+        cols
+            Columns to return, can be from other tables. Returns all exon columns if None.
+        filter
+            Filter to apply to the query.
+        join_type
+            Type of join to use for the query.
+        """
+        table = "exon"
+        if cols is None:
+            cols = self.list_columns(table)  # get all columns
+
+        return_cols = cols.copy()
+        # Require primary key in output
+        if "exon_id" not in cols:
+            cols.append("exon_id")
+        # seq_name is required for genomic range operations
+        if (
+            "exon_seq_start" in cols or "exon_seq_end" in cols
+        ) and "seq_name" not in cols:
+            cols.append("seq_name")
+        self.clean_columns(cols)
+
+        cols = list(set(cols) | filter.columns())  # add columns from filter
+
+        query = self.build_query(table, cols, filter, join_type)
+
+        result = query.execute()
+
+        return_cols = return_cols + [col for col in cols if col not in return_cols]
+        result = result[return_cols]
+
+        return result
+
     def chromosomes(self):
         """Get chromosome information."""
         return self.db.table("chromosome").execute()
@@ -204,6 +248,11 @@ class EnsemblDB:
         """Build a query for the genomic features table."""
         # check if join is required
         tables = self.get_required_tables(self.tables_for_columns(cols))
+
+        # Basically just to make sure exons stay in the query
+        if table not in tables:
+            tables.append(table)
+
         if len(tables) > 1:
             query = self.join_query(tables, start_with=table, join_type=join_type)
         else:
@@ -215,15 +264,50 @@ class EnsemblDB:
     def join_query(self, tables, start_with, join_type="inner"):
         """Join tables and return a query."""
         # check for intermediate tables
-
+        JOIN_TABLE = [
+            (("gene", "tx"), "gene_id"),
+            (("gene", "chromosome"), "seq_name"),
+            (("tx", "tx2exon"), "tx_id"),
+            (("tx2exon", "exon"), "exon_id"),
+            (("tx", "protein"), "tx_id"),
+            (("gene", "entrezgene"), "gene_id"),
+            (("protein", "protein_domain"), "protein_id"),
+            (("protein", "uniprot"), "protein_id"),
+            (("uniprot", "protein_domain"), "protein_id"),
+        ]
+        tables = tables.copy()
         tables.remove(start_with)
-        tables = [start_with] + tables
-        if join_type == "inner":
-            query = self.inner_join_query(tables)
-        elif join_type == "left":
-            query = self.left_join_query(tables)
-        else:
-            raise ValueError(f"Invalid join type: {join_type}")
+        db = self.db
+        current_tables = [start_with]
+        query = db.table(start_with)
+
+        while len(tables) > 0:
+            for (table_names, key), t1_name, t2_name in product(  # noqa: B007
+                JOIN_TABLE, current_tables, tables
+            ):
+                if t1_name in table_names and t2_name in table_names:
+                    break
+            else:
+                raise ValueError(
+                    f"Failed to find match for tables: {current_tables} and {tables}"
+                )
+
+            current_tables.append(t2_name)
+            tables.remove(t2_name)
+
+            t2 = db.table(t2_name)
+            if join_type == "inner":
+                query = query.join(t2, predicates=[key], how="inner")
+            elif join_type == "left":
+                query = query.join(
+                    t2,
+                    predicates=[key],
+                    how="left",
+                    suffixes=("", "_y"),
+                )
+                query = query.drop(f"{key}_y")  # drop duplicate columns
+            else:
+                raise ValueError(f"Invalid join type: {join_type}")
 
         return query
 
@@ -292,7 +376,7 @@ class EnsemblDB:
 
         return sorted(tab, key=lambda x: table_order[x])
 
-    def get_required_tables(self, tab):
+    def get_required_tables(self, tab) -> list:
         """Given tables, get all intermediate tables required to execute the query."""
         # If we have exon and any other table, we need definitely tx2exon
         if "exon" in tab and len(tab) > 1:
