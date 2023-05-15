@@ -30,6 +30,7 @@
     filters.GeneRangesFilter
     filters.TxIDFilter
     filters.TxBioTypeFilter
+    filters.ExonIDFilter
     filters.CanonicalTxFilter
     filters.UniProtIDFilter
     filters.UniProtDBFilter

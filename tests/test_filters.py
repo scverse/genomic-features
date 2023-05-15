@@ -10,7 +10,8 @@ def hsapiens108():
     return gf.ensembl.annotation("Hsapiens", 108)
 
 
-@pytest.fixture(params=["genes", "transcripts"])
+# TODO: "exons" is very slow for large results, should figure out how to handle that
+@pytest.fixture(params=["genes", "transcripts", "exons"])
 def table_method(request):
     def getter(db):
         return getattr(db, request.param)
@@ -34,6 +35,7 @@ def table_method(request):
         filters.UniProtIDFilter("F5H4R2.65"),
         filters.UniProtDBFilter("SWISSPROT"),
         filters.UniProtMappingTypeFilter("SEQUENCE_MATCH"),
+        filters.ExonIDFilter("ENSE00001639513"),
     ],
 )
 def test_equality_filter_single(hsapiens108, filt, table_method):
@@ -54,6 +56,7 @@ def test_equality_filter_single(hsapiens108, filt, table_method):
         filters.UniProtIDFilter(["A0A804HIK9.2", "G5E9P6.85"]),
         filters.UniProtDBFilter(["SWISSPROT", "Uniprot_isoform"]),
         filters.UniProtMappingTypeFilter(["DIRECT"]),  # Only two kinds in this DB
+        filters.ExonIDFilter(["ENSE00001639513", "ENSE00001923809"]),
     ],
 )
 def test_equality_filter_list(hsapiens108, filt, table_method):

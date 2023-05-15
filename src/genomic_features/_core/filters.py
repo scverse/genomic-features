@@ -206,6 +206,16 @@ class TxBioTypeFilter(AbstractFilterEqualityExpr):
         return {"tx"}
 
 
+class ExonIDFilter(AbstractFilterEqualityExpr):
+    """Filter by exon_id column."""
+
+    def columns(self) -> set[str]:
+        return {"exon_id"}
+
+    def required_tables(self) -> set[str]:
+        return {"exon"}
+
+
 class GeneNameFilter(AbstractFilterEqualityExpr):
     """Filter by gene_name."""
 

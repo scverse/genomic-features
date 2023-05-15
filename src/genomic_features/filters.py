@@ -1,6 +1,7 @@
 from ._core.filters import (
     CanonicalTxFilter,
     EmptyFilter,
+    ExonIDFilter,
     GeneBioTypeFilter,
     GeneIDFilter,
     GeneNameFilter,
@@ -19,6 +20,7 @@ __all__ = [
     "GeneBioTypeFilter",
     "GeneRangesFilter",
     "EmptyFilter",
+    "ExonIDFilter",
     "GeneNameFilter",
     "SeqNameFilter",
     "TxIDFilter",
