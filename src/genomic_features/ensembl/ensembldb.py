@@ -9,6 +9,7 @@ from typing import Literal
 import ibis
 import requests
 from ibis import _
+from ibis.expr.types import Table as IbisTable
 from pandas import DataFrame, Timestamp
 from requests.exceptions import HTTPError
 
@@ -69,7 +70,8 @@ def list_ensdb_annotations(species: None | str | list[str] = None) -> DataFrame:
     Parameters
     ----------
     species
-        Show gene annotations for subset of species E.g. Hsapiens for human, Mmusculus for mouse (optional)
+        Show gene annotations for subset of species E.g. Hsapiens for human, Mmusculus
+        for mouse (optional)
 
     Returns
     -------
@@ -167,7 +169,8 @@ class EnsemblDB:
         Params
         ------
         cols
-            Columns to return, can be from other tables. Returns all transcript columns if None.
+            Columns to return, can be from other tables. Returns all transcript columns
+            if None.
         filter
             Filter to apply to the query.
         join_type
@@ -208,7 +211,8 @@ class EnsemblDB:
         Params
         ------
         cols
-            Columns to return, can be from other tables. Returns all exon columns if None.
+            Columns to return, can be from other tables. Returns all exon columns if
+            None.
         filter
             Filter to apply to the query.
         join_type
@@ -240,11 +244,17 @@ class EnsemblDB:
 
         return result
 
-    def chromosomes(self):
+    def chromosomes(self) -> DataFrame:
         """Get chromosome information."""
         return self.db.table("chromosome").execute()
 
-    def build_query(self, table, cols, filter, join_type="inner"):
+    def build_query(
+        self,
+        table: Literal["gene", "tx", "exon"],
+        cols: list[str],
+        filter: _filters.AbstractFilterExpr,
+        join_type: Literal["inner", "left"] = "inner",
+    ) -> IbisTable:
         """Build a query for the genomic features table."""
         # check if join is required
         tables = self.get_required_tables(self.tables_for_columns(cols))
@@ -261,7 +271,12 @@ class EnsemblDB:
         query = query.filter(filter.convert()).select(cols)
         return query
 
-    def join_query(self, tables, start_with, join_type="inner"):
+    def join_query(
+        self,
+        tables: list[str],
+        start_with: str,
+        join_type: Literal["inner", "left"] = "inner",
+    ) -> IbisTable:
         """Join tables and return a query."""
         # check for intermediate tables
         JOIN_TABLE = [
@@ -309,35 +324,6 @@ class EnsemblDB:
             else:
                 raise ValueError(f"Invalid join type: {join_type}")
 
-        return query
-
-    def inner_join_query(self, tables):
-        """Join tables in inner join and return a query."""
-        # build query
-        query = self.db.table(tables[0])
-        for t in tables[1:]:
-            # determine common columns
-            # TODO: Determine if we want to use all common columns
-            common_cols = list(set(query.columns) & set(self.db.table(t).columns))
-            query = query.join(self.db.table(t), predicates=common_cols, how="inner")
-        return query
-
-    def left_join_query(self, tables):
-        """Join tables in left join and return a query."""
-        # build query
-        query = self.db.table(tables[0])
-        for t in tables[1:]:
-            # determine common columns
-            common_cols = list(set(query.columns) & set(self.db.table(t).columns))
-            query = query.join(
-                self.db.table(t),
-                predicates=common_cols,
-                how="left",
-                suffixes=("", "_y"),
-            )
-            query = query.drop(
-                *[f"{c}_y" for c in common_cols]
-            )  # drop duplicate columns
         return query
 
     def list_tables(self) -> list:
