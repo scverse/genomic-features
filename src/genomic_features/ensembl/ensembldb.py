@@ -4,11 +4,11 @@ import warnings
 from functools import cached_property
 from itertools import product
 from pathlib import Path
-from typing import Literal
+from typing import Final, Literal
 
 import ibis
 import requests
-from ibis import _
+from ibis import deferred
 from ibis.expr.types import Table as IbisTable
 from pandas import DataFrame, Timestamp
 from requests.exceptions import HTTPError
@@ -88,7 +88,9 @@ def list_ensdb_annotations(species: None | str | list[str] = None) -> DataFrame:
         db_path.unlink()
         ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
 
-    version_table = ahdb.table("rdatapaths").filter(_.rdataclass == "EnsDb").execute()
+    version_table = (
+        ahdb.table("rdatapaths").filter(deferred.rdataclass == "EnsDb").execute()
+    )
     version_table["Species"] = (
         version_table["rdatapath"]
         .str.split("/", expand=True)[2]
@@ -134,29 +136,22 @@ class EnsemblDB:
 
     def genes(
         self,
-        cols: list = None,
+        cols: list[str] | None = None,
         filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
         """Get the genes table."""
-        table = "gene"
+        table: Final = "gene"
         if cols is None:
             # TODO: check why R adds entrezid
             cols = self.list_columns(table)  # get all columns
 
-        return_cols = cols
-        cols = list(set(cols + ["gene_id"]))  # genes always needs gene_id
-        cols = self.clean_columns(cols)
-        cols = list(set(cols) | filter.columns())  # add columns from filter
+        cols = cols.copy()
+        if "gene_id" not in cols:  # genes always needs gene_id
+            cols.append("gene_id")
 
         query = self.build_query(table, cols, filter, join_type)
-
-        result = query.execute()
-
-        # order columns
-        return_cols = return_cols + [col for col in cols if col not in return_cols]
-        result = result[return_cols]
-        return result
+        return self.execute_query(query)
 
     def transcripts(
         self,
@@ -176,29 +171,20 @@ class EnsemblDB:
         join_type
             Type of join to use for the query.
         """
-        table = "tx"
+        table: Final = "tx"
         if cols is None:
             cols = self.list_columns(table)  # get all columns
 
-        return_cols = cols.copy()
+        cols = cols.copy()
         # Require primary key in output
         if "tx_id" not in cols:
             cols.append("tx_id")
         # seq_name is required for genomic range operations
         if ("tx_seq_start" in cols or "tx_seq_end" in cols) and "seq_name" not in cols:
             cols.append("seq_name")
-        self.clean_columns(cols)
-
-        cols = list(set(cols) | filter.columns())  # add columns from filter
 
         query = self.build_query(table, cols, filter, join_type)
-
-        result = query.execute()
-
-        return_cols = return_cols + [col for col in cols if col not in return_cols]
-        result = result[return_cols]
-
-        return result
+        return self.execute_query(query)
 
     def exons(
         self,
@@ -218,11 +204,11 @@ class EnsemblDB:
         join_type
             Type of join to use for the query.
         """
-        table = "exon"
+        table: Final = "exon"
         if cols is None:
             cols = self.list_columns(table)  # get all columns
 
-        return_cols = cols.copy()
+        cols = cols.copy()
         # Require primary key in output
         if "exon_id" not in cols:
             cols.append("exon_id")
@@ -231,18 +217,14 @@ class EnsemblDB:
             "exon_seq_start" in cols or "exon_seq_end" in cols
         ) and "seq_name" not in cols:
             cols.append("seq_name")
-        self.clean_columns(cols)
-
-        cols = list(set(cols) | filter.columns())  # add columns from filter
 
         query = self.build_query(table, cols, filter, join_type)
+        return self.execute_query(query)
 
-        result = query.execute()
-
-        return_cols = return_cols + [col for col in cols if col not in return_cols]
-        result = result[return_cols]
-
-        return result
+    def execute_query(self, query: IbisTable) -> DataFrame:
+        """Run a query and return the results."""
+        # TODO: Allow more options for returning results
+        return query.execute()
 
     def chromosomes(self) -> DataFrame:
         """Get chromosome information."""
@@ -256,6 +238,12 @@ class EnsemblDB:
         join_type: Literal["inner", "left"] = "inner",
     ) -> IbisTable:
         """Build a query for the genomic features table."""
+        # Finalize cols
+        self.clean_columns(cols)
+        for col in filter.columns():
+            if col not in cols:
+                cols.append(col)
+
         # check if join is required
         tables = self.get_required_tables(self.tables_for_columns(cols))
 
@@ -395,17 +383,16 @@ class EnsemblDB:
 
         return self.tables_by_degree(tab)
 
-    def list_columns(self, tables=None) -> list:
+    def list_columns(self, tables: str | list[str] | None = None) -> list[str]:
         """List all columns available in the genomic features table."""
         if tables is None:
             tables = self.db.list_tables()  # list of table names
         elif isinstance(tables, str):
             tables = [tables]  # list of tables names (only one)
-        columns = []
         columns = [c for t in tables for c in self.db.table(t).columns]
         return columns
 
-    def clean_columns(self, columns) -> list:
+    def clean_columns(self, columns: list[str]) -> list[str]:
         """Clean a list of columns to make sure they are valid."""
         if isinstance(columns, str):
             columns = [columns]
@@ -421,7 +408,7 @@ class EnsemblDB:
             raise ValueError("No valid columns were found.")
         return cols
 
-    def tables_for_columns(self, cols: list, start_with: str = None) -> list:
+    def tables_for_columns(self, cols: list, start_with: str | None = None) -> list:
         """
         Return a list of tables that contain the specified columns.
 

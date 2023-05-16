@@ -69,7 +69,7 @@ class AndFilterExpr(AbstractFilterOperatorExpr):
     def __repr__(self) -> str:
         return f"({self.left} & {self.right})"
 
-    def convert(self) -> ibis.Expr:
+    def convert(self) -> ibis.expr.deferred.Deferred:
         return self.left.convert() & self.right.convert()
 
 
@@ -98,7 +98,7 @@ class OrFilterExpr(AbstractFilterOperatorExpr):
     def __repr__(self) -> str:
         return f"({self.left} | {self.right})"
 
-    def convert(self) -> ibis.Expr:
+    def convert(self) -> ibis.expr.deferred.Deferred:
         return self.left.convert() | self.right.convert()
 
 
@@ -127,13 +127,18 @@ class AbstractFilterEqualityExpr(AbstractFilterExpr):
 # Selected:              *******
 
 
-class AbstractFilterRangeExpr(AbstractFilterExpr):
+class AbstractFilterRangeExpr(AbstractFilterExpr, ABC):
     def __init__(self, value: str, type: str = "any"):
         self.value = value
         self.type = type
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.value})"
+
+    @property
+    @abstractmethod
+    def _range_columns(self) -> list[str]:
+        pass
 
     def convert(self) -> ibis.expr.deferred.Deferred:
         match = re.match(r"^(\w+):(\d+)-(\d+)$", self.value)
@@ -352,29 +357,3 @@ class UniProtMappingTypeFilter(AbstractFilterEqualityExpr):
 
     def required_tables(self) -> set[str]:
         return {"uniprot"}
-
-
-# class GeneIDFilter(AbstractFilterExpr):
-#     def __init__(self, gene_id: str | list[str]):
-#         self.gene_id = gene_id
-
-#     def convert(self) -> ibis.expr.deferred.Deferred:
-#         if isinstance(self.gene_id, str):
-#             return ibis.deferred.gene_id == self.gene_id
-#         else:
-#             return ibis.deferred.gene_id.isin(self.gene_id)
-
-# def required_tables(self) -> set[str]:
-#     # TODO: Joining on gene_id is not necessary for transcript queries
-#     return {"gene"}
-
-
-# class GeneBioTypeFilter(AbstractFilterExpr):
-#     def __init__(self, gene_biotype: str | list[str]):
-#         self.gene_biotype = gene_biotype
-
-#     def convert(self) -> ibis.expr.deferred.Deferred:
-#         if isinstance(self.gene_biotype, str):
-#             return ibis.deferred.gene_biotype == self.gene_biotype
-#         else:
-#             return ibis.deferred.gene_biotype.isin(self.gene_biotype)
