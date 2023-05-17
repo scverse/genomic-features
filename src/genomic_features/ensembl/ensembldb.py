@@ -150,8 +150,8 @@ class EnsemblDB:
         if "gene_id" not in cols:  # genes always needs gene_id
             cols.append("gene_id")
 
-        query = self.build_query(table, cols, filter, join_type)
-        return self.execute_query(query)
+        query = self._build_query(table, cols, filter, join_type)
+        return self._execute_query(query)
 
     def transcripts(
         self,
@@ -183,8 +183,8 @@ class EnsemblDB:
         if ("tx_seq_start" in cols or "tx_seq_end" in cols) and "seq_name" not in cols:
             cols.append("seq_name")
 
-        query = self.build_query(table, cols, filter, join_type)
-        return self.execute_query(query)
+        query = self._build_query(table, cols, filter, join_type)
+        return self._execute_query(query)
 
     def exons(
         self,
@@ -218,10 +218,10 @@ class EnsemblDB:
         ) and "seq_name" not in cols:
             cols.append("seq_name")
 
-        query = self.build_query(table, cols, filter, join_type)
-        return self.execute_query(query)
+        query = self._build_query(table, cols, filter, join_type)
+        return self._execute_query(query)
 
-    def execute_query(self, query: IbisTable) -> DataFrame:
+    def _execute_query(self, query: IbisTable) -> DataFrame:
         """Run a query and return the results."""
         # TODO: Allow more options for returning results
         return query.distinct().execute()
@@ -230,7 +230,7 @@ class EnsemblDB:
         """Get chromosome information."""
         return self.db.table("chromosome").execute()
 
-    def build_query(
+    def _build_query(
         self,
         table: Literal["gene", "tx", "exon"],
         cols: list[str],
@@ -239,27 +239,27 @@ class EnsemblDB:
     ) -> IbisTable:
         """Build a query for the genomic features table."""
         # Finalize cols
-        self.clean_columns(cols)
+        self._clean_columns(cols)
         for col in filter.columns():
             if col not in cols:
                 cols.append(col)
 
         # check if join is required
-        tables = self.get_required_tables(self.tables_for_columns(cols))
+        tables = self._get_required_tables(self._tables_for_columns(cols))
 
         # Basically just to make sure exons stay in the query
         if table not in tables:
             tables.append(table)
 
         if len(tables) > 1:
-            query = self.join_query(tables, start_with=table, join_type=join_type)
+            query = self._join_query(tables, start_with=table, join_type=join_type)
         else:
             query = self.db.table(table)
         # add filter
         query = query.filter(filter.convert()).select(cols)
         return query
 
-    def join_query(
+    def _join_query(
         self,
         tables: list[str],
         start_with: str,
@@ -318,7 +318,7 @@ class EnsemblDB:
         """List all tables available in the genomic features database."""
         return self.db.list_tables()
 
-    def tables_by_degree(self, tab: list[str] = None) -> list:
+    def _tables_by_degree(self, tab: list[str] = None) -> list:
         """Order tables available in the genomic features database."""
         if tab is None:
             tab = self.list_tables()  # list of table names
@@ -350,7 +350,7 @@ class EnsemblDB:
 
         return sorted(tab, key=lambda x: table_order[x])
 
-    def get_required_tables(self, tab) -> list:
+    def _get_required_tables(self, tab) -> list:
         """Given tables, get all intermediate tables required to execute the query."""
         # If we have exon and any other table, we need definitely tx2exon
         if "exon" in tab and len(tab) > 1:
@@ -381,7 +381,7 @@ class EnsemblDB:
         if "entrezgene" in tab and len(tab) > 1:
             tab = list(set(tab + ["gene"]))
 
-        return self.tables_by_degree(tab)
+        return self._tables_by_degree(tab)
 
     def list_columns(self, tables: str | list[str] | None = None) -> list[str]:
         """List all columns available in the genomic features table."""
@@ -392,7 +392,7 @@ class EnsemblDB:
         columns = [c for t in tables for c in self.db.table(t).columns]
         return columns
 
-    def clean_columns(self, columns: list[str]) -> list[str]:
+    def _clean_columns(self, columns: list[str]) -> list[str]:
         """Clean a list of columns to make sure they are valid."""
         if isinstance(columns, str):
             columns = [columns]
@@ -408,7 +408,7 @@ class EnsemblDB:
             raise ValueError("No valid columns were found.")
         return cols
 
-    def tables_for_columns(self, cols: list, start_with: str | None = None) -> list:
+    def _tables_for_columns(self, cols: list, start_with: str | None = None) -> list:
         """
         Return a list of tables that contain the specified columns.
 
@@ -417,8 +417,8 @@ class EnsemblDB:
         cols
             Columns that we're looking for.
         """
-        cols = self.clean_columns(cols)
-        table_list = self.tables_by_degree()  # list of table names
+        cols = self._clean_columns(cols)
+        table_list = self._tables_by_degree()  # list of table names
 
         # remove start_with from table_list and add it to the beginning of the list
         if start_with is not None:
