@@ -31,7 +31,7 @@ ANNOTATION_HUB_URL = (
 TIMESTAMP_URL = "https://annotationhub.bioconductor.org/metadata/database_timestamp"
 
 
-def annotation(species: str, version: str | int):
+def annotation(species: str, version: str | int) -> EnsemblDB:
     """Get an annotation database for a species and version.
 
     Parameters
@@ -43,8 +43,12 @@ def annotation(species: str, version: str | int):
 
     Returns
     -------
-    EnsemblDB
-        The annotation database.
+    The annotation database.
+
+
+    Usage
+    -----
+    >>> gf.ensembl.annotation("Hsapiens", "108")
     """
     try:
         ensdb = EnsemblDB(
@@ -75,8 +79,12 @@ def list_ensdb_annotations(species: None | str | list[str] = None) -> DataFrame:
 
     Returns
     -------
-    DataFrame
-        A table of available species and annotation versions in EnsDb.
+    A table of available species and annotation versions in EnsDb.
+
+
+    Usage
+    -----
+    >>> gf.ensembl.list_ensdb_annotations("Mmusculus")
     """
     # Get latest AnnotationHub timestamp
     db_path = Path(retrieve_annotation(ANNOTATION_HUB_URL))
@@ -126,7 +134,7 @@ class EnsemblDB:
 
     @cached_property
     def metadata(self) -> dict:
-        """Metadata for the database (e.g. who built it, when, with what resource)."""
+        """Metadata for the database as a dict (e.g. who built it, when, with what resource)."""
         metadata_tbl = self.db.table("metadata").execute()
         return dict(zip(metadata_tbl["name"], metadata_tbl["value"]))
 
@@ -140,7 +148,23 @@ class EnsemblDB:
         filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
-        """Get the genes table."""
+        """Get gene annotations.
+
+        Parameters
+        ----------
+        cols
+            Which columns to retrieve from the database. Can be from other tables.
+            Returns all gene columns if None.
+        filters
+            Filters to apply to the query.
+        join_type
+            How to perform joins during the query (if cols or filters requires them).
+
+
+        Usage
+        -----
+        >>> ensdb.genes(cols=["gene_id", "gene_name", "tx_id"])
+        """
         table: Final = "gene"
         if cols is None:
             # TODO: check why R adds entrezid
@@ -159,17 +183,22 @@ class EnsemblDB:
         filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
-        """Get transcripts table.
+        """Get transcript annotations.
 
-        Params
-        ------
+        Parameters
+        ----------
         cols
-            Columns to return, can be from other tables. Returns all transcript columns
-            if None.
-        filter
-            Filter to apply to the query.
+            Which columns to retrieve from the database. Can be from other tables.
+            Returns all transcript columns if None.
+        filters
+            Filters to apply to the query.
         join_type
-            Type of join to use for the query.
+            How to perform joins during the query (if cols or filters requires them).
+
+
+        Usage
+        -----
+        >>> ensdb.transcripts(cols=["tx_id", "tx_name", "gene_id"])
         """
         table: Final = "tx"
         if cols is None:
@@ -194,15 +223,20 @@ class EnsemblDB:
     ) -> DataFrame:
         """Get exons table.
 
-        Params
-        ------
+        Parameters
+        ----------
         cols
-            Columns to return, can be from other tables. Returns all exon columns if
-            None.
+            Which columns to retrieve from the database. Can be from other tables.
+            Returns all exon columns if None.
         filter
             Filter to apply to the query.
         join_type
             Type of join to use for the query.
+
+
+        Usage
+        -----
+        >>> ensdb.exons()
         """
         table: Final = "exon"
         if cols is None:
@@ -227,7 +261,12 @@ class EnsemblDB:
         return query.distinct().execute()
 
     def chromosomes(self) -> DataFrame:
-        """Get chromosome information."""
+        """Get chromosome information (seq_name, length, etc.).
+
+        Usage
+        -----
+        >>> ensdb.chromosomes()
+        """
         return self.db.table("chromosome").execute()
 
     def _build_query(
