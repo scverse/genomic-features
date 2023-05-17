@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 
 import genomic_features as gf
@@ -90,7 +91,7 @@ def test_multiple_table_subsetting(hsapiens108):
         filter=gf.filters.GeneIDFilter(["ENSG00000139618"]),
     )
 
-    assert result.shape == (186, 3)
+    assert result.shape == (78, 3)
     assert list(result.columns) == ["gene_id", "gene_name", "exon_id"]
 
     # test left join
@@ -100,7 +101,7 @@ def test_multiple_table_subsetting(hsapiens108):
         join_type="left",
         filter=gf.filters.GeneBioTypeFilter(["protein_coding"]),
     )
-    assert result.shape == (185904, 4)
+    assert result.shape == (135834, 4)
     assert list(result.columns) == [
         "gene_id",
         "gene_name",
@@ -110,3 +111,17 @@ def test_multiple_table_subsetting(hsapiens108):
     assert (
         result.loc[result.gene_biotype != "protein_coding", "protein_id"].isna().all()
     )
+
+
+def test_chromosome_columns(hsapiens108):
+    # https://github.com/scverse/genomic-features/pull/44/files#r1196331705
+    result = hsapiens108.genes(cols=["gene_id", "seq_name", "seq_length"])
+    assert result.shape[0] == hsapiens108.db.table("gene").count().execute()
+
+    chroms = hsapiens108.chromosomes()
+    expected_lengths = (
+        chroms.set_index("seq_name")["seq_length"]
+        .loc[result["seq_name"]]
+        .reset_index(drop=True)
+    )
+    pd.testing.assert_series_equal(result["seq_length"], expected_lengths)

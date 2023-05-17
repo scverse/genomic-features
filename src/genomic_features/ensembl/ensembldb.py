@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import warnings
 from functools import cached_property
+from itertools import product
 from pathlib import Path
+from typing import Final, Literal
 
 import ibis
 import requests
-from ibis import _
+from ibis import deferred
+from ibis.expr.types import Table as IbisTable
 from pandas import DataFrame, Timestamp
 from requests.exceptions import HTTPError
 
@@ -67,7 +70,8 @@ def list_ensdb_annotations(species: None | str | list[str] = None) -> DataFrame:
     Parameters
     ----------
     species
-        Show gene annotations for subset of species E.g. Hsapiens for human, Mmusculus for mouse (optional)
+        Show gene annotations for subset of species E.g. Hsapiens for human, Mmusculus
+        for mouse (optional)
 
     Returns
     -------
@@ -84,7 +88,9 @@ def list_ensdb_annotations(species: None | str | list[str] = None) -> DataFrame:
         db_path.unlink()
         ahdb = ibis.sqlite.connect(retrieve_annotation(ANNOTATION_HUB_URL))
 
-    version_table = ahdb.table("rdatapaths").filter(_.rdataclass == "EnsDb").execute()
+    version_table = (
+        ahdb.table("rdatapaths").filter(deferred.rdataclass == "EnsDb").execute()
+    )
     version_table["Species"] = (
         version_table["rdatapath"]
         .str.split("/", expand=True)[2]
@@ -130,39 +136,121 @@ class EnsemblDB:
 
     def genes(
         self,
-        cols: list = None,
+        cols: list[str] | None = None,
         filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
-        join_type: str = "inner",
+        join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
         """Get the genes table."""
-        table = "gene"
+        table: Final = "gene"
         if cols is None:
             # TODO: check why R adds entrezid
             cols = self.list_columns(table)  # get all columns
 
-        return_cols = cols
-        cols = list(set(cols + ["gene_id"]))  # genes always needs gene_id
-        cols = self.clean_columns(cols)
-        filter.required_tables()
-        cols = list(set(cols) | filter.columns())  # add columns from filter
+        cols = cols.copy()
+        if "gene_id" not in cols:  # genes always needs gene_id
+            cols.append("gene_id")
 
         query = self.build_query(table, cols, filter, join_type)
+        return self.execute_query(query)
 
-        result = query.execute()
+    def transcripts(
+        self,
+        cols: list[str] | None = None,
+        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        join_type: Literal["inner", "left"] = "inner",
+    ) -> DataFrame:
+        """Get transcripts table.
 
-        # order columns
-        return_cols = return_cols + [col for col in cols if col not in return_cols]
-        result = result[return_cols]
-        return result
+        Params
+        ------
+        cols
+            Columns to return, can be from other tables. Returns all transcript columns
+            if None.
+        filter
+            Filter to apply to the query.
+        join_type
+            Type of join to use for the query.
+        """
+        table: Final = "tx"
+        if cols is None:
+            cols = self.list_columns(table)  # get all columns
 
-    def chromosomes(self):
+        cols = cols.copy()
+        # Require primary key in output
+        if "tx_id" not in cols:
+            cols.append("tx_id")
+        # seq_name is required for genomic range operations
+        if ("tx_seq_start" in cols or "tx_seq_end" in cols) and "seq_name" not in cols:
+            cols.append("seq_name")
+
+        query = self.build_query(table, cols, filter, join_type)
+        return self.execute_query(query)
+
+    def exons(
+        self,
+        cols: list[str] | None = None,
+        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        join_type: Literal["inner", "left"] = "inner",
+    ) -> DataFrame:
+        """Get exons table.
+
+        Params
+        ------
+        cols
+            Columns to return, can be from other tables. Returns all exon columns if
+            None.
+        filter
+            Filter to apply to the query.
+        join_type
+            Type of join to use for the query.
+        """
+        table: Final = "exon"
+        if cols is None:
+            cols = self.list_columns(table)  # get all columns
+
+        cols = cols.copy()
+        # Require primary key in output
+        if "exon_id" not in cols:
+            cols.append("exon_id")
+        # seq_name is required for genomic range operations
+        if (
+            "exon_seq_start" in cols or "exon_seq_end" in cols
+        ) and "seq_name" not in cols:
+            cols.append("seq_name")
+
+        query = self.build_query(table, cols, filter, join_type)
+        return self.execute_query(query)
+
+    def execute_query(self, query: IbisTable) -> DataFrame:
+        """Run a query and return the results."""
+        # TODO: Allow more options for returning results
+        return query.distinct().execute()
+
+    def chromosomes(self) -> DataFrame:
         """Get chromosome information."""
         return self.db.table("chromosome").execute()
 
-    def build_query(self, table, cols, filter, join_type="inner"):
+    def build_query(
+        self,
+        table: Literal["gene", "tx", "exon"],
+        cols: list[str],
+        filter: _filters.AbstractFilterExpr,
+        join_type: Literal["inner", "left"] = "inner",
+    ) -> IbisTable:
         """Build a query for the genomic features table."""
+        # Finalize cols
+        self.clean_columns(cols)
+        for col in filter.columns():
+            if col not in cols:
+                cols.append(col)
+
         # check if join is required
         tables = self.get_required_tables(self.tables_for_columns(cols))
+
+        # Basically just to make sure exons stay in the query
+        if table not in tables:
+            tables.append(table)
+
         if len(tables) > 1:
             query = self.join_query(tables, start_with=table, join_type=join_type)
         else:
@@ -171,48 +259,59 @@ class EnsemblDB:
         query = query.filter(filter.convert()).select(cols)
         return query
 
-    def join_query(self, tables, start_with, join_type="inner"):
+    def join_query(
+        self,
+        tables: list[str],
+        start_with: str,
+        join_type: Literal["inner", "left"] = "inner",
+    ) -> IbisTable:
         """Join tables and return a query."""
         # check for intermediate tables
-
+        JOIN_TABLE = [
+            (("gene", "tx"), "gene_id"),
+            (("gene", "chromosome"), "seq_name"),
+            (("tx", "tx2exon"), "tx_id"),
+            (("tx2exon", "exon"), "exon_id"),
+            (("tx", "protein"), "tx_id"),
+            (("gene", "entrezgene"), "gene_id"),
+            (("protein", "protein_domain"), "protein_id"),
+            (("protein", "uniprot"), "protein_id"),
+            (("uniprot", "protein_domain"), "protein_id"),
+        ]
+        tables = tables.copy()
         tables.remove(start_with)
-        tables = [start_with] + tables
-        if join_type == "inner":
-            query = self.inner_join_query(tables)
-        elif join_type == "left":
-            query = self.left_join_query(tables)
-        else:
-            raise ValueError(f"Invalid join type: {join_type}")
+        db = self.db
+        current_tables = [start_with]
+        query = db.table(start_with)
 
-        return query
+        while len(tables) > 0:
+            for (table_names, key), t1_name, t2_name in product(  # noqa: B007
+                JOIN_TABLE, current_tables, tables
+            ):
+                if t1_name in table_names and t2_name in table_names:
+                    break
+            else:
+                raise ValueError(
+                    f"Failed to find match for tables: {current_tables} and {tables}"
+                )
 
-    def inner_join_query(self, tables):
-        """Join tables in inner join and return a query."""
-        # build query
-        query = self.db.table(tables[0])
-        for t in tables[1:]:
-            # determine common columns
-            # TODO: Determine if we want to use all common columns
-            common_cols = list(set(query.columns) & set(self.db.table(t).columns))
-            query = query.join(self.db.table(t), predicates=common_cols, how="inner")
-        return query
+            current_tables.append(t2_name)
+            tables.remove(t2_name)
 
-    def left_join_query(self, tables):
-        """Join tables in left join and return a query."""
-        # build query
-        query = self.db.table(tables[0])
-        for t in tables[1:]:
-            # determine common columns
-            common_cols = list(set(query.columns) & set(self.db.table(t).columns))
-            query = query.join(
-                self.db.table(t),
-                predicates=common_cols,
-                how="left",
-                suffixes=("", "_y"),
-            )
-            query = query.drop(
-                *[f"{c}_y" for c in common_cols]
-            )  # drop duplicate columns
+            t2 = db.table(t2_name)
+            if join_type == "inner":
+                query = query.join(t2, predicates=[key], how="inner")
+            elif join_type == "left":
+                query = query.join(
+                    t2,
+                    predicates=[key],
+                    how="left",
+                    suffixes=("", "_y"),
+                )
+                query = query.drop(f"{key}_y")  # drop duplicate columns
+            else:
+                raise ValueError(f"Invalid join type: {join_type}")
+
         return query
 
     def list_tables(self) -> list:
@@ -251,13 +350,14 @@ class EnsemblDB:
 
         return sorted(tab, key=lambda x: table_order[x])
 
-    def get_required_tables(self, tab):
+    def get_required_tables(self, tab) -> list:
+        """Given tables, get all intermediate tables required to execute the query."""
         # If we have exon and any other table, we need definitely tx2exon
         if "exon" in tab and len(tab) > 1:
             tab = list(set(tab + ["tx2exon"]))
 
         # If we have chromosome and any other table, we'll need gene
-        if "chromosome" in tab and len(tab) > 1:
+        if "seq_name" in tab and len(tab) > 1:
             tab = list(set(tab + ["gene"]))
 
         # If we have exon and we have gene, we'll need also tx
@@ -283,17 +383,16 @@ class EnsemblDB:
 
         return self.tables_by_degree(tab)
 
-    def list_columns(self, tables=None) -> list:
+    def list_columns(self, tables: str | list[str] | None = None) -> list[str]:
         """List all columns available in the genomic features table."""
         if tables is None:
             tables = self.db.list_tables()  # list of table names
         elif isinstance(tables, str):
             tables = [tables]  # list of tables names (only one)
-        columns = []
         columns = [c for t in tables for c in self.db.table(t).columns]
         return columns
 
-    def clean_columns(self, columns) -> list:
+    def clean_columns(self, columns: list[str]) -> list[str]:
         """Clean a list of columns to make sure they are valid."""
         if isinstance(columns, str):
             columns = [columns]
@@ -309,7 +408,7 @@ class EnsemblDB:
             raise ValueError("No valid columns were found.")
         return cols
 
-    def tables_for_columns(self, cols: list, start_with: str = None) -> list:
+    def tables_for_columns(self, cols: list, start_with: str | None = None) -> list:
         """
         Return a list of tables that contain the specified columns.
 
