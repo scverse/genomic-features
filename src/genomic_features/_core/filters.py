@@ -25,11 +25,6 @@ class AbstractFilterExpr(ABC):
         pass
 
     @abstractmethod
-    def required_tables(self) -> set[str]:
-        """Tables required by this filter."""
-        pass
-
-    @abstractmethod
     def columns(self) -> set[str]:
         """Columns required by this filter."""
         pass
@@ -44,9 +39,6 @@ class EmptyFilter(AbstractFilterExpr):
     def convert(self) -> None:
         return None
 
-    def required_tables(self) -> set[str]:
-        return set()
-
     def columns(self) -> set[str]:
         return set()
 
@@ -55,9 +47,6 @@ class AbstractFilterOperatorExpr(AbstractFilterExpr):
     def __init__(self, left: AbstractFilterExpr, right: AbstractFilterExpr):
         self.left = left
         self.right = right
-
-    def required_tables(self) -> set[str]:
-        return self.left.required_tables() & self.right.required_tables()
 
     def columns(self) -> set[str]:
         return self.left.columns() | self.right.columns()
@@ -87,9 +76,6 @@ class NotFilterExpr(AbstractFilterExpr):
 
     def columns(self) -> set[str]:
         return self.expr.columns()
-
-    def required_tables(self) -> set[str]:
-        return self.expr.required_tables()
 
 
 class OrFilterExpr(AbstractFilterOperatorExpr):
@@ -176,19 +162,12 @@ class GeneIDFilter(AbstractFilterEqualityExpr):
     def columns(self) -> set[str]:
         return {"gene_id"}
 
-    def required_tables(self) -> set[str]:
-        # TODO: Joining on gene_id is not necessary for transcript queries
-        return {"gene"}
-
 
 class GeneBioTypeFilter(AbstractFilterEqualityExpr):
     """Filter by gene_biotype."""
 
     def columns(self) -> set[str]:
         return {"gene_biotype"}
-
-    def required_tables(self) -> set[str]:
-        return {"gene"}
 
 
 class TxIDFilter(AbstractFilterEqualityExpr):
@@ -197,18 +176,12 @@ class TxIDFilter(AbstractFilterEqualityExpr):
     def columns(self) -> set[str]:
         return {"tx_id"}
 
-    def required_tables(self) -> set[str]:
-        return {"tx"}
-
 
 class TxBioTypeFilter(AbstractFilterEqualityExpr):
     """Filter by tx_biotype column."""
 
     def columns(self) -> set[str]:
         return {"tx_biotype"}
-
-    def required_tables(self) -> set[str]:
-        return {"tx"}
 
 
 class ExonIDFilter(AbstractFilterEqualityExpr):
@@ -217,18 +190,12 @@ class ExonIDFilter(AbstractFilterEqualityExpr):
     def columns(self) -> set[str]:
         return {"exon_id"}
 
-    def required_tables(self) -> set[str]:
-        return {"exon"}
-
 
 class GeneNameFilter(AbstractFilterEqualityExpr):
     """Filter by gene_name."""
 
     def columns(self) -> set[str]:
         return {"gene_name"}
-
-    def required_tables(self) -> set[str]:
-        return {"gene"}
 
 
 class GeneRangesFilter(AbstractFilterRangeExpr):
@@ -250,9 +217,6 @@ class GeneRangesFilter(AbstractFilterRangeExpr):
 
     def columns(self) -> set[str]:
         return set(self._range_columns)
-
-    def required_tables(self) -> set[str]:
-        return {"gene"}
 
 
 class SeqNameFilter(AbstractFilterEqualityExpr):
@@ -278,9 +242,6 @@ class SeqNameFilter(AbstractFilterEqualityExpr):
     def columns(self) -> set[str]:
         return {"seq_name"}
 
-    def required_tables(self) -> set[str]:
-        return {"gene"}
-
 
 class CanonicalTxFilter(AbstractFilterExpr):
     """Filter for canonical transcripts.
@@ -304,9 +265,6 @@ class CanonicalTxFilter(AbstractFilterExpr):
     def columns(self) -> set[str]:
         return {"tx_is_canonical"}
 
-    def required_tables(self) -> set[str]:
-        return {"tx"}
-
     def convert(self) -> ibis.expr.deferred.Deferred:
         return ibis.deferred["tx_is_canonical"] == 1
 
@@ -323,9 +281,6 @@ class UniProtIDFilter(AbstractFilterEqualityExpr):
     def columns(self) -> set[str]:
         return {"uniprot_id"}
 
-    def required_tables(self) -> set[str]:
-        return {"uniprot"}
-
 
 class UniProtDBFilter(AbstractFilterEqualityExpr):
     """Filter by UniProt database.
@@ -339,9 +294,6 @@ class UniProtDBFilter(AbstractFilterEqualityExpr):
     def columns(self) -> set[str]:
         return {"uniprot_db"}
 
-    def required_tables(self) -> set[str]:
-        return {"uniprot"}
-
 
 class UniProtMappingTypeFilter(AbstractFilterEqualityExpr):
     """Filter by UniProt mapping type.
@@ -354,6 +306,3 @@ class UniProtMappingTypeFilter(AbstractFilterEqualityExpr):
 
     def columns(self) -> set[str]:
         return {"uniprot_mapping_type"}
-
-    def required_tables(self) -> set[str]:
-        return {"uniprot"}
