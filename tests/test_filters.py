@@ -11,12 +11,19 @@ def hsapiens108():
 
 
 # TODO: "exons" is very slow for large results, should figure out how to handle that
-@pytest.fixture(params=["genes", "transcripts", "exons"])
+@pytest.fixture(
+    params=["genes", "transcripts", pytest.param("exons", marks=pytest.mark.slow)]
+)
 def table_method(request):
     def getter(db):
         return getattr(db, request.param)
 
     return getter
+
+
+def _filter_id_func(filt) -> str:
+    """Generate test id for filter."""
+    return f"{filt.__class__.__name__}_{filt.value}"
 
 
 @pytest.mark.parametrize(
@@ -25,18 +32,19 @@ def table_method(request):
         filters.GeneIDFilter("ENSG00000000003"),
         filters.GeneIDFilter("ENSG00000000460"),
         filters.GeneIDFilter("LRG_997"),
-        filters.GeneBioTypeFilter("protein_coding"),
+        filters.GeneBioTypeFilter("transcribed_processed_pseudogene"),
         filters.GeneBioTypeFilter("TR_C_gene"),
         filters.GeneNameFilter("TSPAN6"),
         filters.TxIDFilter("ENST00000513666"),
-        filters.TxBioTypeFilter("protein_coding"),
+        filters.TxBioTypeFilter("transcribed_processed_pseudogene"),
         filters.SeqNameFilter("1"),
         filters.SeqNameFilter("MT"),
         filters.UniProtIDFilter("F5H4R2.65"),
-        filters.UniProtDBFilter("SWISSPROT"),
+        filters.UniProtDBFilter("Uniprot_isoform"),
         filters.UniProtMappingTypeFilter("SEQUENCE_MATCH"),
         filters.ExonIDFilter("ENSE00001639513"),
     ],
+    ids=_filter_id_func,
 )
 def test_equality_filter_single(hsapiens108, filt, table_method):
     func = table_method(hsapiens108)
@@ -58,6 +66,7 @@ def test_equality_filter_single(hsapiens108, filt, table_method):
         filters.UniProtMappingTypeFilter(["DIRECT"]),  # Only two kinds in this DB
         filters.ExonIDFilter(["ENSE00001639513", "ENSE00001923809"]),
     ],
+    ids=_filter_id_func,
 )
 def test_equality_filter_list(hsapiens108, filt, table_method):
     func = table_method(hsapiens108)

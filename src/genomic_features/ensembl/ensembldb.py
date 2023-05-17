@@ -224,7 +224,7 @@ class EnsemblDB:
     def execute_query(self, query: IbisTable) -> DataFrame:
         """Run a query and return the results."""
         # TODO: Allow more options for returning results
-        return query.execute()
+        return query.distinct().execute()
 
     def chromosomes(self) -> DataFrame:
         """Get chromosome information."""
