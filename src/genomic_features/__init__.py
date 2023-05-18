@@ -1,7 +1,7 @@
 from importlib.metadata import version
 
-from .annotate_anndata import annotate_anndata
 from . import ensembl, filters
+from .annotate import annotate
 
 __all__ = ["ensembl"]
 

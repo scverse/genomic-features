@@ -3,7 +3,7 @@ import warnings
 import pandas as pd
 
 
-def annotate_anndata(
+def annotate(
     adata_var: pd.DataFrame,
     annotation_df: pd.DataFrame,
     var_on: str = None,

@@ -24,7 +24,7 @@ def adata():
 
 @pytest.fixture(scope="module")
 def annotated_adata_var(adata, genes):
-    return gf.annotate_anndata(adata.var, genes)
+    return gf.annotate(adata.var, genes)
 
 
 def test_output(annotated_adata_var):
@@ -42,10 +42,10 @@ def test_var_names(annotated_adata_var, adata):
 
 
 def test_anndata_changes(adata, genes):
-    gf.annotate_anndata(adata.var, genes)
+    gf.annotate(adata.var, genes)
     assert "gene_name" not in adata.var
     adata.var["gene_ids"] = adata.var_names.copy()
-    gf.annotate_anndata(adata.var, genes, on="gene_ids")
+    gf.annotate(adata.var, genes, var_on="gene_ids")
     assert "gene_name" not in adata.var
 
 
@@ -59,7 +59,7 @@ def test_missing_genes(genes):
         ),
     )
     with pytest.warns(UserWarning):
-        annotated_adata_var = gf.annotate_anndata(adata_custom_genes.var, genes)
+        annotated_adata_var = gf.annotate(adata_custom_genes.var, genes)
         assert annotated_adata_var.loc["GENE1"][genes.columns].isna().all()
 
 
@@ -77,9 +77,9 @@ def test_unique_ids(genes, adata):
         ),
     )
     with pytest.raises(AssertionError):
-        gf.annotate_anndata(adata_duplicate_genes.var, genes)
+        gf.annotate(adata_duplicate_genes.var, genes)
     with pytest.raises(ValueError):
-        gf.annotate_anndata(adata.var, genes, id_column="gene_name")
+        gf.annotate(adata.var, genes, annotation_on="gene_name")
 
 
 def test_clashing_columns(adata, genes):
@@ -87,6 +87,6 @@ def test_clashing_columns(adata, genes):
     adata.var["gene_biotype"] = "foo"
     adata.var["seq_name"] = "chr1"
     with pytest.warns(UserWarning, match=r"gene_biotype.+seq_name"):
-        annotated_var = gf.annotate_anndata(adata.var, genes)
+        annotated_var = gf.annotate(adata.var, genes)
     assert "lncRNA" in annotated_var["gene_biotype"].values
     assert "12" in annotated_var["seq_name"].values
