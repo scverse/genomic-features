@@ -9,7 +9,7 @@
 .. autosummary::
     :toctree: generated
 
-    genomic_features.annotate_anndata
+    genomic_features.annotate
     ensembl.annotation
     ensembl.EnsemblDB
     ensembl.list_ensdb_annotations
