@@ -6,8 +6,8 @@ import pandas as pd
 def annotate_anndata(
     adata_var: pd.DataFrame,
     annotation_df: pd.DataFrame,
-    on: str = None,
-    id_column: str = None,
+    var_on: str = None,
+    annotation_on: str = None,
 ) -> pd.DataFrame:
     """
     Annotate variables from AnnData object with a DataFrame of annotations.
@@ -18,11 +18,11 @@ def annotate_anndata(
         The AnnData.var DataFrame.
     annotation_df
         The DataFrame of annotations (e.g. output of `EnsemblDB.genes()`).
-    on
-        The column name in `adata_var` to join on (useful if geneIDs are not stored in `adata.var_names`).
-        If `None`, tables are joined based on index of `adata_var`.
-    id_column
-        The column name in `annotation_df` to join on. If `None`, the column name is inferred from the
+    var_on
+        The column name in `adata_var` to join var_on (useful if geneIDs are not stored in `adata.var_names`).
+        If `None`, tables are joined based var_on index of `adata_var`.
+    annotation_on
+        The column name in `annotation_df` to join var_on. If `None`, the column name is inferred from the
         `annotation_df` DataFrame (i.e. the column with unique values ending in `_id`).
 
     Returns
@@ -31,25 +31,25 @@ def annotate_anndata(
         The annotated AnnData.var DataFrame.
     """
     # Pick column with IDs in annotation table
-    if id_column is None:
-        id_column = [
+    if annotation_on is None:
+        annotation_on = [
             i
             for i in annotation_df.columns
             if annotation_df[i].is_unique and i.endswith("_id")
         ]
-        if len(id_column) == 0:
+        if len(annotation_on) == 0:
             raise ValueError(
-                "No unique ID column found in annotation_df - specify ID column with `id_column` parameter"
+                "No unique ID column found in annotation_df - specify ID column with `annotation_on` parameter"
             )
-        if len(id_column) > 1:
+        if len(annotation_on) > 1:
             raise ValueError(
-                "Multiple unique ID columns found in annotation_df - specify ID column with `id_column` parameter"
+                "Multiple unique ID columns found in annotation_df - specify ID column with `annotation_on` parameter"
             )
         else:
-            id_column = id_column[0]
+            annotation_on = annotation_on[0]
     else:
-        if not annotation_df[id_column].is_unique:
-            raise ValueError(f"Column {id_column} does not contain unique IDs")
+        if not annotation_df[annotation_on].is_unique:
+            raise ValueError(f"Column {annotation_on} does not contain unique IDs")
 
     adata_var_merge = adata_var.copy()
 
@@ -66,30 +66,32 @@ def annotate_anndata(
         adata_var_merge.drop(common_cols, axis=1, inplace=True)
 
     # Pick IDs in adata_var table
-    if on is None:
+    if var_on is None:
         assert (
             adata_var_merge.index.is_unique
-        ), "var_names do not contain unique IDs - specify ID column with `on` parameter"
+        ), "var_names do not contain unique IDs - specify ID column with `var_on` parameter"
         index_name = adata_var_merge.index.name
         adata_var_merge = adata_var_merge.reset_index(names="var_names")
     else:
-        if on not in adata_var_merge.columns:
+        if var_on not in adata_var_merge.columns:
             raise ValueError(
-                "Column specified by `on` does not exist in adata_var_merge"
+                "Column specified by `var_on` does not exist in adata_var_merge"
             )
-        if not adata_var_merge[on].is_unique:
-            raise ValueError("Column specified by `on` does not contain unique IDs")
-        adata_var_merge["var_names"] = adata_var_merge[on].copy()
+        if not adata_var_merge[var_on].is_unique:
+            raise ValueError("Column specified by `var_on` does not contain unique IDs")
+        adata_var_merge["var_names"] = adata_var_merge[var_on].copy()
 
     # Merge
     annotated_var = (
         adata_var_merge.reset_index()
-        .merge(annotation_df, how="left", right_on=[id_column], left_on=["var_names"])
+        .merge(
+            annotation_df, how="left", right_on=[annotation_on], left_on=["var_names"]
+        )
         .set_index("index")
     )
 
     # Retain order and var_names
-    if on is None:
+    if var_on is None:
         annotated_var = annotated_var.set_index("var_names")
         annotated_var = annotated_var.loc[adata_var_merge["var_names"]]
         annotated_var.index.name = index_name
@@ -99,7 +101,7 @@ def annotate_anndata(
 
     # Check for missing genes
     missing_vars = annotated_var.index[
-        annotated_var[annotation_df.drop([id_column] + common_cols, axis=1).columns]
+        annotated_var[annotation_df.drop([annotation_on], axis=1).columns]
         .isna()
         .all(axis=1)
     ]
