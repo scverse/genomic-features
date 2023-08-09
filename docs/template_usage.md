@@ -125,6 +125,8 @@ On the RTD dashboard choose "Import a Project" and follow the instructions to ad
 
 If your project is private, there are ways to enable docs rendering on [readthedocs.org][] but it is more cumbersome and requires a different subscription for read the docs. See a guide [here](https://docs.readthedocs.io/en/stable/guides/importing-private-repositories.html).
 
+(pre-commit)=
+
 ### Pre-commit checks
 
 [Pre-commit][] checks are fast programs that
@@ -272,10 +274,11 @@ there may also be good reasons to choose a different approach, e.g. using an obj
 
 [scanpy-api]: https://scanpy.readthedocs.io/en/stable/usage-principles.html
 
+(vcs-based-versioning)=
+
 ### Using VCS-based versioning
 
-By default, the template uses hard-coded version numbers that are set in `pyproject.toml` and [managed with
-bump2version](contributing.md#publishing-a-release). If you prefer to have your project automatically infer version numbers from git
+By default, the template uses hard-coded version numbers that are set in `pyproject.toml`. If you prefer to have your project automatically infer version numbers from git
 tags, it is straightforward to switch to vcs-based versioning using [hatch-vcs][].
 
 In `pyproject.toml` add the following changes, and you are good to go!
