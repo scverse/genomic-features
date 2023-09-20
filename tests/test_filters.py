@@ -77,7 +77,7 @@ def test_equality_filter_list(hsapiens108, filt, table_method):
 def test_canonical(hsapiens108, table_method):
     func = table_method(hsapiens108)
     result = func(
-        cols=["tx_id", "canonical_transcript"], filter=filters.CanonicalTxFilter()
+        columns=["tx_id", "canonical_transcript"], filter=filters.CanonicalTxFilter()
     )
 
     assert result["tx_is_canonical"].sum() == result.shape[0]
@@ -86,7 +86,7 @@ def test_canonical(hsapiens108, table_method):
     )
 
     result_non_canonical = func(
-        cols=["tx_id", "canonical_transcript"], filter=~filters.CanonicalTxFilter()
+        columns=["tx_id", "canonical_transcript"], filter=~filters.CanonicalTxFilter()
     )
 
     assert result_non_canonical["tx_is_canonical"].sum() == 0
@@ -147,10 +147,10 @@ def test_or_filter(hsapiens108):
 
 def test_range_filter(hsapiens108):
     any_overlap_filter = hsapiens108.genes(
-        filter=filters.GeneRangesFilter("1:77000000-78000000")
+        filter=filters.GeneRangeFilter("1:77000000-78000000")
     )
     within_overlap_filter = hsapiens108.genes(
-        filter=filters.GeneRangesFilter("1:77000000-78000000", type="within")
+        filter=filters.GeneRangeFilter("1:77000000-78000000", type="within")
     )
     assert all(within_overlap_filter.seq_name == "1") & all(
         any_overlap_filter.seq_name == "1"
@@ -164,14 +164,14 @@ def test_range_filter(hsapiens108):
     )
     # Test input
     with pytest.raises(ValueError):
-        hsapiens108.genes(filter=filters.GeneRangesFilter("1_77000000_78000000"))
+        hsapiens108.genes(filter=filters.GeneRangeFilter("1_77000000_78000000"))
 
     with pytest.raises(ValueError):
-        hsapiens108.genes(filter=filters.GeneRangesFilter("1-77000000-78000000"))
+        hsapiens108.genes(filter=filters.GeneRangeFilter("1-77000000-78000000"))
 
     with pytest.raises(ValueError):
         hsapiens108.genes(
-            filter=filters.GeneRangesFilter("1:77000000-78000000", type="start")
+            filter=filters.GeneRangeFilter("1:77000000-78000000", type="start")
         )
 
 

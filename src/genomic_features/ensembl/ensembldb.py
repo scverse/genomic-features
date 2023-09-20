@@ -144,7 +144,7 @@ class EnsemblDB:
 
     def genes(
         self,
-        cols: list[str] | None = None,
+        columns: list[str] | None = None,
         filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
@@ -152,34 +152,34 @@ class EnsemblDB:
 
         Parameters
         ----------
-        cols
+        columns
             Which columns to retrieve from the database. Can be from other tables.
             Returns all gene columns if None.
         filters
             Filters to apply to the query.
         join_type
-            How to perform joins during the query (if cols or filters requires them).
+            How to perform joins during the query (if columns or filters requires them).
 
 
         Usage
         -----
-        >>> ensdb.genes(cols=["gene_id", "gene_name", "tx_id"])
+        >>> ensdb.genes(columns=["gene_id", "gene_name", "tx_id"])
         """
         table: Final = "gene"
-        if cols is None:
+        if columns is None:
             # TODO: check why R adds entrezid
-            cols = self.list_columns(table)  # get all columns
+            columns = self.list_columns(table)  # get all columns
 
-        cols = cols.copy()
-        if "gene_id" not in cols:  # genes always needs gene_id
-            cols.append("gene_id")
+        columns = columns.copy()
+        if "gene_id" not in columns:  # genes always needs gene_id
+            columns.append("gene_id")
 
-        query = self._build_query(table, cols, filter, join_type)
+        query = self._build_query(table, columns, filter, join_type)
         return self._execute_query(query)
 
     def transcripts(
         self,
-        cols: list[str] | None = None,
+        columns: list[str] | None = None,
         filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
@@ -187,37 +187,39 @@ class EnsemblDB:
 
         Parameters
         ----------
-        cols
+        columns
             Which columns to retrieve from the database. Can be from other tables.
             Returns all transcript columns if None.
         filters
             Filters to apply to the query.
         join_type
-            How to perform joins during the query (if cols or filters requires them).
+            How to perform joins during the query (if columns or filters requires them).
 
 
         Usage
         -----
-        >>> ensdb.transcripts(cols=["tx_id", "tx_name", "gene_id"])
+        >>> ensdb.transcripts(columns=["tx_id", "tx_name", "gene_id"])
         """
         table: Final = "tx"
-        if cols is None:
-            cols = self.list_columns(table)  # get all columns
+        if columns is None:
+            columns = self.list_columns(table)  # get all columns
 
-        cols = cols.copy()
+        columns = columns.copy()
         # Require primary key in output
-        if "tx_id" not in cols:
-            cols.append("tx_id")
+        if "tx_id" not in columns:
+            columns.append("tx_id")
         # seq_name is required for genomic range operations
-        if ("tx_seq_start" in cols or "tx_seq_end" in cols) and "seq_name" not in cols:
-            cols.append("seq_name")
+        if (
+            "tx_seq_start" in columns or "tx_seq_end" in columns
+        ) and "seq_name" not in columns:
+            columns.append("seq_name")
 
-        query = self._build_query(table, cols, filter, join_type)
+        query = self._build_query(table, columns, filter, join_type)
         return self._execute_query(query)
 
     def exons(
         self,
-        cols: list[str] | None = None,
+        columns: list[str] | None = None,
         filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
@@ -225,7 +227,7 @@ class EnsemblDB:
 
         Parameters
         ----------
-        cols
+        columns
             Which columns to retrieve from the database. Can be from other tables.
             Returns all exon columns if None.
         filter
@@ -239,20 +241,20 @@ class EnsemblDB:
         >>> ensdb.exons()
         """
         table: Final = "exon"
-        if cols is None:
-            cols = self.list_columns(table)  # get all columns
+        if columns is None:
+            columns = self.list_columns(table)  # get all columns
 
-        cols = cols.copy()
+        columns = columns.copy()
         # Require primary key in output
-        if "exon_id" not in cols:
-            cols.append("exon_id")
+        if "exon_id" not in columns:
+            columns.append("exon_id")
         # seq_name is required for genomic range operations
         if (
-            "exon_seq_start" in cols or "exon_seq_end" in cols
-        ) and "seq_name" not in cols:
-            cols.append("seq_name")
+            "exon_seq_start" in columns or "exon_seq_end" in columns
+        ) and "seq_name" not in columns:
+            columns.append("seq_name")
 
-        query = self._build_query(table, cols, filter, join_type)
+        query = self._build_query(table, columns, filter, join_type)
         return self._execute_query(query)
 
     def _execute_query(self, query: IbisTable) -> DataFrame:
@@ -272,19 +274,19 @@ class EnsemblDB:
     def _build_query(
         self,
         table: Literal["gene", "tx", "exon"],
-        cols: list[str],
+        columns: list[str],
         filter: _filters.AbstractFilterExpr,
         join_type: Literal["inner", "left"] = "inner",
     ) -> IbisTable:
         """Build a query for the genomic features table."""
-        # Finalize cols
-        self._clean_columns(cols)
+        # Finalize columns
+        self._clean_columns(columns)
         for col in filter.columns():
-            if col not in cols:
-                cols.append(col)
+            if col not in columns:
+                columns.append(col)
 
         # check if join is required
-        tables = self._get_required_tables(self._tables_for_columns(cols))
+        tables = self._get_required_tables(self._tables_for_columns(columns))
 
         # Basically just to make sure exons stay in the query
         if table not in tables:
@@ -295,7 +297,7 @@ class EnsemblDB:
         else:
             query = self.db.table(table)
         # add filter
-        query = query.filter(filter.convert()).select(cols)
+        query = query.filter(filter.convert()).select(columns)
         return query
 
     def _join_query(
@@ -438,26 +440,26 @@ class EnsemblDB:
             columns = [columns]
 
         valid_columns = set(self.list_columns())
-        cols = list(filter(lambda c: c in valid_columns, columns))
+        output_columns = list(filter(lambda c: c in valid_columns, columns))
         invalid_columns = set(columns) - valid_columns
         if invalid_columns:
             raise ValueError(
                 f"The following columns are not found in any database: {invalid_columns}"
             )
-        if not cols:
+        if not output_columns:
             raise ValueError("No valid columns were found.")
-        return cols
+        return output_columns
 
-    def _tables_for_columns(self, cols: list, start_with: str | None = None) -> list:
+    def _tables_for_columns(self, columns: list, start_with: str | None = None) -> list:
         """
         Return a list of tables that contain the specified columns.
 
         Parameters
         ----------
-        cols
+        columns
             Columns that we're looking for.
         """
-        cols = self._clean_columns(cols)
+        columns = self._clean_columns(columns)
         table_list = self._tables_by_degree()  # list of table names
 
         # remove start_with from table_list and add it to the beginning of the list
@@ -472,14 +474,14 @@ class EnsemblDB:
         tables = []
         for t in table_list:
             # check if all columns are in one table
-            if set(cols).issubset(self.db.table(t).columns):
+            if set(columns).issubset(self.db.table(t).columns):
                 tables.append(t)
                 return tables
             else:
                 # check if a single column is in the table
-                for c in cols.copy():
+                for c in columns.copy():
                     if c in self.db.table(t).columns:
                         if t not in tables:
                             tables.append(t)
-                        cols.remove(c)  # remove column from list
+                        columns.remove(c)  # remove column from list
         return tables
