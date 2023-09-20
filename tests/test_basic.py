@@ -27,7 +27,9 @@ def test_repr():
 
 def test_invalid_join():
     with pytest.raises(ValueError, match=r"Invalid join type: flarb"):
-        gf.ensembl.annotation("Hsapiens", 108).genes(cols=["tx_id"], join_type="flarb")
+        gf.ensembl.annotation("Hsapiens", 108).genes(
+            columns=["tx_id"], join_type="flarb"
+        )
 
 
 def test_exons():

@@ -60,7 +60,7 @@ def test_required_tables(hsapiens108):
 
 # Test simple subsetting to columns in one table gene
 def test_simple_subsetting(hsapiens108):
-    result = hsapiens108.genes(cols=["gene_id", "gene_name"])
+    result = hsapiens108.genes(columns=["gene_id", "gene_name"])
     assert result.shape == (70616, 2)
     assert result.columns.tolist() == ["gene_id", "gene_name"]
 
@@ -69,7 +69,7 @@ def test_simple_subsetting(hsapiens108):
 def test_multiple_table_subsetting(hsapiens108):
     # table genes and transcripts
     result = hsapiens108.genes(
-        cols=["gene_id", "gene_name", "tx_id"],
+        columns=["gene_id", "gene_name", "tx_id"],
         join_type="inner",
     )
     assert result.shape == (275721, 3)
@@ -77,7 +77,7 @@ def test_multiple_table_subsetting(hsapiens108):
 
     # table genes and transcripts with filter
     result = hsapiens108.genes(
-        cols=["gene_id", "gene_name", "tx_id"],
+        columns=["gene_id", "gene_name", "tx_id"],
         join_type="inner",
         filter=gf.filters.GeneBioTypeFilter(["protein_coding"]),
     )
@@ -86,7 +86,7 @@ def test_multiple_table_subsetting(hsapiens108):
 
     # table genes, transcripts and exons and filter
     result = hsapiens108.genes(
-        cols=["gene_id", "gene_name", "exon_id"],
+        columns=["gene_id", "gene_name", "exon_id"],
         join_type="inner",
         filter=gf.filters.GeneIDFilter(["ENSG00000139618"]),
     )
@@ -97,7 +97,7 @@ def test_multiple_table_subsetting(hsapiens108):
     # test left join
     # table genes and transcripts
     result = hsapiens108.genes(
-        cols=["gene_id", "gene_name", "protein_id"],
+        columns=["gene_id", "gene_name", "protein_id"],
         join_type="left",
         filter=gf.filters.GeneBioTypeFilter(["protein_coding"]),
     )
@@ -115,7 +115,7 @@ def test_multiple_table_subsetting(hsapiens108):
 
 def test_chromosome_columns(hsapiens108):
     # https://github.com/scverse/genomic-features/pull/44/files#r1196331705
-    result = hsapiens108.genes(cols=["gene_id", "seq_name", "seq_length"])
+    result = hsapiens108.genes(columns=["gene_id", "seq_name", "seq_length"])
     assert result.shape[0] == hsapiens108.db.table("gene").count().execute()
 
     chroms = hsapiens108.chromosomes()

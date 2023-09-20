@@ -251,7 +251,7 @@ class CanonicalTxFilter(AbstractFilterExpr):
 
     >>> ensdb.transcripts(filter=gf.filters.CanonicalTxFilter())
     >>> ensdb.exons(
-    ...     cols=["tx_id", "exon_id", "seq_name", "exon_seq_start", "exon_seq_end"],
+    ...     columns=["tx_id", "exon_id", "seq_name", "exon_seq_start", "exon_seq_end"],
     ...     filter=gf.filters.CanonicalTxFilter()
     ... )
     """

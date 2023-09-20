@@ -77,7 +77,7 @@ def test_equality_filter_list(hsapiens108, filt, table_method):
 def test_canonical(hsapiens108, table_method):
     func = table_method(hsapiens108)
     result = func(
-        cols=["tx_id", "canonical_transcript"], filter=filters.CanonicalTxFilter()
+        columns=["tx_id", "canonical_transcript"], filter=filters.CanonicalTxFilter()
     )
 
     assert result["tx_is_canonical"].sum() == result.shape[0]
@@ -86,7 +86,7 @@ def test_canonical(hsapiens108, table_method):
     )
 
     result_non_canonical = func(
-        cols=["tx_id", "canonical_transcript"], filter=~filters.CanonicalTxFilter()
+        columns=["tx_id", "canonical_transcript"], filter=~filters.CanonicalTxFilter()
     )
 
     assert result_non_canonical["tx_is_canonical"].sum() == 0
