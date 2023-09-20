@@ -345,7 +345,8 @@ class EnsemblDB:
                     t2,
                     predicates=[key],
                     how="left",
-                    suffixes=("", "_y"),
+                    rname="{name}_y",
+                    # suffixes=("", "_y"),
                 )
                 query = query.drop(f"{key}_y")  # drop duplicate columns
             else:
