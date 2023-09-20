@@ -25,7 +25,8 @@ def test_tables_by_degree(hsapiens108):
     ]
     result = hsapiens108._tables_by_degree(tab=["protein", "exon"])
     assert result == ["exon", "protein"]
-    result = hsapiens108._tables_by_degree(tab=["protein", "invalid_table"])
+    with pytest.warns(UserWarning, match="not in the database: invalid_table"):
+        result = hsapiens108._tables_by_degree(tab=["protein", "invalid_table"])
     assert result == ["protein"]
 
 
