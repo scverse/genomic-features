@@ -198,7 +198,7 @@ class GeneNameFilter(AbstractFilterEqualityExpr):
         return {"gene_name"}
 
 
-class GeneRangesFilter(AbstractFilterRangeExpr):
+class GeneRangeFilter(AbstractFilterRangeExpr):
     """
     Filter features within a genomic range
 

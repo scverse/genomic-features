@@ -147,10 +147,10 @@ def test_or_filter(hsapiens108):
 
 def test_range_filter(hsapiens108):
     any_overlap_filter = hsapiens108.genes(
-        filter=filters.GeneRangesFilter("1:77000000-78000000")
+        filter=filters.GeneRangeFilter("1:77000000-78000000")
     )
     within_overlap_filter = hsapiens108.genes(
-        filter=filters.GeneRangesFilter("1:77000000-78000000", type="within")
+        filter=filters.GeneRangeFilter("1:77000000-78000000", type="within")
     )
     assert all(within_overlap_filter.seq_name == "1") & all(
         any_overlap_filter.seq_name == "1"
@@ -164,14 +164,14 @@ def test_range_filter(hsapiens108):
     )
     # Test input
     with pytest.raises(ValueError):
-        hsapiens108.genes(filter=filters.GeneRangesFilter("1_77000000_78000000"))
+        hsapiens108.genes(filter=filters.GeneRangeFilter("1_77000000_78000000"))
 
     with pytest.raises(ValueError):
-        hsapiens108.genes(filter=filters.GeneRangesFilter("1-77000000-78000000"))
+        hsapiens108.genes(filter=filters.GeneRangeFilter("1-77000000-78000000"))
 
     with pytest.raises(ValueError):
         hsapiens108.genes(
-            filter=filters.GeneRangesFilter("1:77000000-78000000", type="start")
+            filter=filters.GeneRangeFilter("1:77000000-78000000", type="start")
         )
 
 

@@ -27,7 +27,7 @@
     filters.GeneBioTypeFilter
     filters.GeneNameFilter
     filters.SeqNameFilter
-    filters.GeneRangesFilter
+    filters.GeneRangeFilter
     filters.TxIDFilter
     filters.TxBioTypeFilter
     filters.ExonIDFilter
