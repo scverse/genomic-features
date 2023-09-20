@@ -23,7 +23,7 @@ urls.Documentation = "https://genomic-features.readthedocs.io/"
 urls.Source = "https://github.com/scverse/genomic-features"
 urls.Home-page = "https://github.com/scverse/genomic-features"
 dependencies = [
-    "ibis-framework[sqlite]",
+    "ibis-framework[sqlite]>0.6",
     "pooch",
     "pandas",
     "pyarrow",
