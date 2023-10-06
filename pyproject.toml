@@ -53,6 +53,7 @@ doc = [
 test = [
     "pytest",
     "pytest-cov",
+    "anndata"
 ]
 
 [tool.coverage.run]
