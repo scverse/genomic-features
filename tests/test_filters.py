@@ -205,3 +205,22 @@ def test_seqs_as_int(hsapiens108):
 
     pd.testing.assert_frame_equal(result_w_ints, result_w_strs)
     pd.testing.assert_frame_equal(result_w_ints, result_w_mixed)
+
+
+def test_promoters(hsapiens108):
+    promoters = hsapiens108.promoters()
+    assert isinstance(promoters, pd.DataFrame)
+    promoters = hsapiens108.promoters(upstream=100, downstream=100)
+    assert ((promoters.promoter_seq_end - promoters.promoter_seq_start) == 200).all()
+    promoters = hsapiens108.promoters(upstream=1000, downstream=100)
+    assert ((promoters.promoter_seq_end - promoters.promoter_seq_start) == 1100).all()
+    # Test strandedness
+    promoters = hsapiens108.promoters(upstream=1000, downstream=100)
+    assert (
+        promoters[promoters.seq_strand == -1].promoter_seq_start
+        == promoters[promoters.seq_strand == -1].gene_seq_end - 100
+    ).all()
+    assert (
+        promoters[promoters.seq_strand == 1].promoter_seq_start
+        == promoters[promoters.seq_strand == 1].gene_seq_start - 1000
+    ).all()
