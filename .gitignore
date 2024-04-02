@@ -28,6 +28,3 @@ __pycache__/
 # IDEs
 /.idea/
 /.vscode/
-
-# prettier insists on creating this
-/node_modules/
