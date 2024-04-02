@@ -139,18 +139,3 @@ nitpick_ignore_regex = [
     # Ibis uses mkdocs
     (r".*", r"ibis\..*"),
 ]
-
-
-def setup(app):
-    """App setup hook."""
-    app.add_config_value(
-        "recommonmark_config",
-        {
-            "auto_toc_tree_section": "Contents",
-            "enable_auto_toc_tree": True,
-            "enable_math": True,
-            "enable_inline_math": False,
-            "enable_eval_rst": True,
-        },
-        True,
-    )
