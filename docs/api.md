@@ -25,6 +25,16 @@
 
     filters.GeneIDFilter
     filters.GeneBioTypeFilter
+    filters.GeneNameFilter
+    filters.SeqNameFilter
+    filters.GeneRangesFilter
+    filters.TxIDFilter
+    filters.TxBioTypeFilter
+    filters.ExonIDFilter
+    filters.CanonicalTxFilter
+    filters.UniProtIDFilter
+    filters.UniProtDBFilter
+    filters.UniProtMappingTypeFilter
     filters.EmptyFilter
 ```
 

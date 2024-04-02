@@ -4,27 +4,32 @@ requires = ["hatchling"]
 
 [project]
 name = "genomic-features"
-version = "0.0.1"
+version = "0.0.1.a0"
 description = "Genomic annotations using BioConductor resources in Python."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [
     {name = "Isaac Virshup"},
+    {name = "Emma Dann"},
+    {name = "Laura Martens"},
 ]
 maintainers = [
     {name = "Isaac Virshup", email = "ivirshup@gmail.com"},
+    {name = "Emma Dann", email = "ed6@sanger.ac.uk"},
+    {name = "Laura Martens", email = "laura.d.martens@icloud.com"},
 ]
 urls.Documentation = "https://genomic-features.readthedocs.io/"
 urls.Source = "https://github.com/scverse/genomic-features"
 urls.Home-page = "https://github.com/scverse/genomic-features"
 dependencies = [
-    "ibis-framework[sqlite]",
+    "ibis-framework[sqlite]>0.6",
     "pooch",
     "pandas",
     "pyarrow",
     # for debug logging (referenced from the issue template)
-    "session-info"
+    "session-info",
+    "tqdm"
 ]
 
 [project.optional-dependencies]
@@ -40,6 +45,8 @@ doc = [
     "myst-nb",
     "sphinxcontrib-bibtex>=1.0.0",
     "sphinx-autodoc-typehints",
+    "sphinxext.opengraph",
+    "matplotlib",  # Optional dep of sphinxext.opengraph
     # For notebooks
     "ipykernel",
     "ipython",
@@ -63,14 +70,15 @@ addopts = [
     "--import-mode=importlib",  # allow using test files with same name
 ]
 
-[tool.black]
-line-length = 88
-target-version = ["py39"]
-
 [tool.ruff]
 src = ["src"]
 line-length = 88
-target-version = "py39"
+extend-include = ["*.ipynb"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
 select = [
     "F",  # Errors detected by Pyflakes
     "E",  # Error detected by Pycodestyle
@@ -85,7 +93,7 @@ select = [
     "RUF100",  # Report unused noqa directives
 ]
 ignore = [
-    # line too long -> we accept long comment lines; black gets rid of long code lines
+    # line too long -> we accept long comment lines; formatter gets rid of long code lines
     "E501",
     # Do not assign a lambda expression, use a def -> lambda expression assignments are convenient
     "E731",
@@ -112,13 +120,14 @@ ignore = [
     "D213",
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "docs/*" = ["I"]
 "tests/*" = ["D"]
 "*/__init__.py" = ["F401"]
+"src/genomic_features/_core/filters.py" = ["D101", "D102"]  # Lots of inherited docstrings
 
 [tool.jupytext]
 formats = "ipynb,md"
@@ -132,5 +141,5 @@ skip = [
     "docs/changelog.md",
     "docs/references.bib",
     "docs/references.md",
-    "docs/notebooks/example.ipynb"
+    "docs/notebooks/example.ipynb",
 ]

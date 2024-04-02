@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 
 import ibis
@@ -24,11 +25,6 @@ class AbstractFilterExpr(ABC):
         pass
 
     @abstractmethod
-    def required_tables(self) -> set[str]:
-        """Tables required by this filter."""
-        pass
-
-    @abstractmethod
     def columns(self) -> set[str]:
         """Columns required by this filter."""
         pass
@@ -43,9 +39,6 @@ class EmptyFilter(AbstractFilterExpr):
     def convert(self) -> None:
         return None
 
-    def required_tables(self) -> set[str]:
-        return set()
-
     def columns(self) -> set[str]:
         return set()
 
@@ -54,9 +47,6 @@ class AbstractFilterOperatorExpr(AbstractFilterExpr):
     def __init__(self, left: AbstractFilterExpr, right: AbstractFilterExpr):
         self.left = left
         self.right = right
-
-    def required_tables(self) -> set[str]:
-        return self.left.required_tables() & self.right.required_tables()
 
     def columns(self) -> set[str]:
         return self.left.columns() | self.right.columns()
@@ -68,7 +58,7 @@ class AndFilterExpr(AbstractFilterOperatorExpr):
     def __repr__(self) -> str:
         return f"({self.left} & {self.right})"
 
-    def convert(self) -> ibis.Expr:
+    def convert(self) -> ibis.expr.deferred.Deferred:
         return self.left.convert() & self.right.convert()
 
 
@@ -87,9 +77,6 @@ class NotFilterExpr(AbstractFilterExpr):
     def columns(self) -> set[str]:
         return self.expr.columns()
 
-    def required_tables(self) -> set[str]:
-        return self.expr.required_tables()
-
 
 class OrFilterExpr(AbstractFilterOperatorExpr):
     """Logical or of two filters."""
@@ -97,7 +84,7 @@ class OrFilterExpr(AbstractFilterOperatorExpr):
     def __repr__(self) -> str:
         return f"({self.left} | {self.right})"
 
-    def convert(self) -> ibis.Expr:
+    def convert(self) -> ibis.expr.deferred.Deferred:
         return self.left.convert() | self.right.convert()
 
 
@@ -115,48 +102,207 @@ class AbstractFilterEqualityExpr(AbstractFilterExpr):
             return ibis.deferred[list(self.columns())[0]].isin(self.value)
 
 
+#  ------------------------ OVERLAP TYPE: any ------------------------ #
+# Range:       |==============================|
+# Annotation: |---|     |-------|           |-----| |---|
+# Selected:    ***       *******             *****
+
+#  ------------------------ OVERLAP TYPE: within --------------------- #
+# Range:       |==============================|
+# Annotation: |---|     |-------|           |-----| |---|
+# Selected:              *******
+
+
+class AbstractFilterRangeExpr(AbstractFilterExpr, ABC):
+    def __init__(self, value: str, type: str = "any"):
+        self.value = value
+        self.type = type
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.value})"
+
+    @property
+    @abstractmethod
+    def _range_columns(self) -> list[str]:
+        pass
+
+    def convert(self) -> ibis.expr.deferred.Deferred:
+        match = re.match(r"^(\w+):(\d+)-(\d+)$", self.value)
+        if match is None:
+            raise ValueError(
+                "Invalid range format. Valid format is '{seq_name}:{start}-{end}'"
+            )
+        range_seq_name, range_start, range_end = match.groups()
+        start_column, end_column, seq_name_column = self._range_columns
+        if self.type == "any":
+            return (ibis.deferred[seq_name_column] == range_seq_name) & (
+                (
+                    (ibis.deferred[end_column] >= int(range_start))
+                    & (ibis.deferred[end_column] <= int(range_end))
+                )
+                | (
+                    (ibis.deferred[start_column] >= int(range_start))
+                    & (ibis.deferred[start_column] <= int(range_end))
+                )
+            )
+        elif self.type == "within":
+            return (ibis.deferred[seq_name_column] == range_seq_name) & (
+                (ibis.deferred[end_column] <= int(range_end))
+                & (ibis.deferred[start_column] >= int(range_start))
+            )
+        else:
+            raise ValueError(
+                "Invalid overlap type. Valid options are 'any' and 'within'"
+            )
+
+
 class GeneIDFilter(AbstractFilterEqualityExpr):
-    """Filter by gene_id column."""
+    """Filter by gene_id."""
 
     def columns(self) -> set[str]:
         return {"gene_id"}
 
-    def required_tables(self) -> set[str]:
-        # TODO: Joining on gene_id is not necessary for transcript queries
-        return {"gene"}
-
 
 class GeneBioTypeFilter(AbstractFilterEqualityExpr):
-    """Filter by gene_biotype column."""
+    """Filter by gene_biotype."""
 
     def columns(self) -> set[str]:
         return {"gene_biotype"}
 
-    def required_tables(self) -> set[str]:
-        return {"gene"}
+
+class TxIDFilter(AbstractFilterEqualityExpr):
+    """Filter by tx_id column."""
+
+    def columns(self) -> set[str]:
+        return {"tx_id"}
 
 
-# class GeneIDFilter(AbstractFilterExpr):
-#     def __init__(self, gene_id: str | list[str]):
-#         self.gene_id = gene_id
+class TxBioTypeFilter(AbstractFilterEqualityExpr):
+    """Filter by tx_biotype column."""
 
-#     def convert(self) -> ibis.expr.deferred.Deferred:
-#         if isinstance(self.gene_id, str):
-#             return ibis.deferred.gene_id == self.gene_id
-#         else:
-#             return ibis.deferred.gene_id.isin(self.gene_id)
-
-# def required_tables(self) -> set[str]:
-#     # TODO: Joining on gene_id is not necessary for transcript queries
-#     return {"gene"}
+    def columns(self) -> set[str]:
+        return {"tx_biotype"}
 
 
-# class GeneBioTypeFilter(AbstractFilterExpr):
-#     def __init__(self, gene_biotype: str | list[str]):
-#         self.gene_biotype = gene_biotype
+class ExonIDFilter(AbstractFilterEqualityExpr):
+    """Filter by exon_id column."""
 
-#     def convert(self) -> ibis.expr.deferred.Deferred:
-#         if isinstance(self.gene_biotype, str):
-#             return ibis.deferred.gene_biotype == self.gene_biotype
-#         else:
-#             return ibis.deferred.gene_biotype.isin(self.gene_biotype)
+    def columns(self) -> set[str]:
+        return {"exon_id"}
+
+
+class GeneNameFilter(AbstractFilterEqualityExpr):
+    """Filter by gene_name."""
+
+    def columns(self) -> set[str]:
+        return {"gene_name"}
+
+
+class GeneRangesFilter(AbstractFilterRangeExpr):
+    """
+    Filter features within a genomic range
+
+    Parameters
+    ----------
+    value : str
+        Genomic range in the format "seq_name:start-end"
+    type : str
+        String indicating how overlaps are to be filters.
+        Options are 'any' and 'within'. Default is 'any'
+    """
+
+    @property
+    def _range_columns(self) -> list[str]:
+        return ["gene_seq_start", "gene_seq_end", "seq_name"]
+
+    def columns(self) -> set[str]:
+        return set(self._range_columns)
+
+
+class SeqNameFilter(AbstractFilterEqualityExpr):
+    """Filter by seq_name (e.g. chromosome).
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.SeqNameFilter("MT"))
+    """
+
+    def __init__(self, value: str | int | list):
+        if isinstance(value, int):
+            value = str(value)
+        elif isinstance(value, str):
+            pass
+        else:
+            orig_value = value
+            value = [str(v) for v in orig_value]
+
+        self.value = value
+
+    def columns(self) -> set[str]:
+        return {"seq_name"}
+
+
+class CanonicalTxFilter(AbstractFilterExpr):
+    """Filter for canonical transcripts.
+
+    Usage
+    -----
+
+    >>> ensdb.transcripts(filter=gf.filters.CanonicalTxFilter())
+    >>> ensdb.exons(
+    ...     cols=["tx_id", "exon_id", "seq_name", "exon_seq_start", "exon_seq_end"],
+    ...     filter=gf.filters.CanonicalTxFilter(),
+    ... )
+    """
+
+    def __init__(self):
+        pass
+
+    def __repr__(self) -> str:
+        return "CanonicalTxFilter()"
+
+    def columns(self) -> set[str]:
+        return {"tx_is_canonical"}
+
+    def convert(self) -> ibis.expr.deferred.Deferred:
+        return ibis.deferred["tx_is_canonical"] == 1
+
+
+class UniProtIDFilter(AbstractFilterEqualityExpr):
+    """Filter by UniProt ID.
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.UniProtIDFilter("P12345"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"uniprot_id"}
+
+
+class UniProtDBFilter(AbstractFilterEqualityExpr):
+    """Filter by UniProt database.
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.UniProtDBFilter("SWISSPROT"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"uniprot_db"}
+
+
+class UniProtMappingTypeFilter(AbstractFilterEqualityExpr):
+    """Filter by UniProt mapping type.
+
+    Usage
+    -----
+
+    >>> ensdb.genes(filter=gf.filters.UniProtMappingTypeFilter("DIRECT"))
+    """
+
+    def columns(self) -> set[str]:
+        return {"uniprot_mapping_type"}

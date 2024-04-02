@@ -18,26 +18,29 @@ def test_missing_version():
         gf.ensembl.annotation("Hsapiens", 86)
 
 
-def test_promoters():
-    promoters = gf.ensembl.annotation("Hsapiens", 108).promoters()
-    assert isinstance(promoters, pd.DataFrame)
-    promoters = gf.ensembl.annotation("Hsapiens", 108).promoters(
-        upstream=100, downstream=100
+def test_repr():
+    result = repr(gf.ensembl.annotation("Hsapiens", 108))
+    expected = "EnsemblDB(organism='Homo sapiens', ensembl_release='108')"
+
+    assert result == expected
+
+
+def test_invalid_join():
+    with pytest.raises(ValueError, match=r"Invalid join type: flarb"):
+        gf.ensembl.annotation("Hsapiens", 108).genes(cols=["tx_id"], join_type="flarb")
+
+
+def test_exons():
+    ensdb = gf.ensembl.annotation("Hsapiens", 108)
+    exons = ensdb.exons()
+
+    pd.testing.assert_index_equal(
+        exons.columns,
+        pd.Index(["exon_id", "exon_seq_start", "exon_seq_end", "seq_name"]),
     )
-    assert ((promoters.promoter_seq_end - promoters.promoter_seq_start) == 200).all()
-    promoters = gf.ensembl.annotation("Hsapiens", 108).promoters(
-        upstream=1000, downstream=100
-    )
-    assert ((promoters.promoter_seq_end - promoters.promoter_seq_start) == 1100).all()
-    # Test strandedness
-    promoters = gf.ensembl.annotation("Hsapiens", 108).promoters(
-        upstream=1000, downstream=100
-    )
-    assert (
-        promoters[promoters.seq_strand == -1].promoter_seq_start
-        == promoters[promoters.seq_strand == -1].gene_seq_end - 100
-    ).all()
-    assert (
-        promoters[promoters.seq_strand == 1].promoter_seq_start
-        == promoters[promoters.seq_strand == 1].gene_seq_start - 1000
-    ).all()
+    assert exons.shape == (888642, 4)  # Number from using R package on same DB
+
+    exons_id = ensdb.exons(["exon_id"])
+
+    pd.testing.assert_index_equal(exons_id.columns, pd.Index(["exon_id"]))
+    assert exons_id.shape[0] == exons.shape[0]
