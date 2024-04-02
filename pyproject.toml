@@ -28,7 +28,8 @@ dependencies = [
     "pandas",
     "pyarrow",
     # for debug logging (referenced from the issue template)
-    "session-info"
+    "session-info",
+    "tqdm"
 ]
 
 [project.optional-dependencies]
