@@ -51,13 +51,15 @@ def annotation(species: str, version: str | int) -> EnsemblDB:
     >>> gf.ensembl.annotation("Hsapiens", "108")
     """
     try:
-        ensdb = EnsemblDB(
-            ibis.sqlite.connect(
-                retrieve_annotation(
-                    ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
-                )
-            )
+        sqlite_file_path = retrieve_annotation(
+            ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
         )
+
+        # Connect to DuckDB through Ibis
+        conn = ibis.duckdb.connect(":memory:", extensions=["sqlite"])
+        conn.attach_sqlite(sqlite_file_path)
+        ensdb = EnsemblDB(conn)
+
     except HTTPError as err:
         if err.response.status_code == 404:
             raise ValueError(
