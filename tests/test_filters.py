@@ -197,11 +197,20 @@ def test_negation(hsapiens108):
 def test_seqs_as_int(hsapiens108):
     result_w_int = hsapiens108.genes(filter=filters.SeqNameFilter(1))
     result_w_str = hsapiens108.genes(filter=filters.SeqNameFilter("1"))
-    pd.testing.assert_frame_equal(result_w_int, result_w_str)
+    pd.testing.assert_frame_equal(
+        result_w_int.sort_values(by="gene_id").reset_index(drop=True),
+        result_w_str.sort_values(by="gene_id").reset_index(drop=True),
+    )
 
     result_w_ints = hsapiens108.genes(filter=filters.SeqNameFilter([1, 2]))
     result_w_strs = hsapiens108.genes(filter=filters.SeqNameFilter(["1", "2"]))
     result_w_mixed = hsapiens108.genes(filter=filters.SeqNameFilter([1, "2"]))
 
-    pd.testing.assert_frame_equal(result_w_ints, result_w_strs)
-    pd.testing.assert_frame_equal(result_w_ints, result_w_mixed)
+    pd.testing.assert_frame_equal(
+        result_w_ints.sort_values(by="gene_id").reset_index(drop=True),
+        result_w_strs.sort_values(by="gene_id").reset_index(drop=True),
+    )
+    pd.testing.assert_frame_equal(
+        result_w_ints.sort_values(by="gene_id").reset_index(drop=True),
+        result_w_mixed.sort_values(by="gene_id").reset_index(drop=True),
+    )
