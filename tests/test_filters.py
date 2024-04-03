@@ -194,14 +194,26 @@ def test_negation(hsapiens108):
     assert result.shape[0] == 22894
 
 
-def test_seqs_as_int(hsapiens108):
+@pytest.mark.parametrize("backend", ["sqlite", "duckdb"])
+def test_seqs_as_int(backend):
+    hsapiens108 = gf.ensembl.annotation("Hsapiens", 108, backend=backend)
+
     result_w_int = hsapiens108.genes(filter=filters.SeqNameFilter(1))
     result_w_str = hsapiens108.genes(filter=filters.SeqNameFilter("1"))
-    pd.testing.assert_frame_equal(result_w_int, result_w_str)
+    pd.testing.assert_frame_equal(
+        result_w_int,
+        result_w_str,
+    )
 
     result_w_ints = hsapiens108.genes(filter=filters.SeqNameFilter([1, 2]))
     result_w_strs = hsapiens108.genes(filter=filters.SeqNameFilter(["1", "2"]))
     result_w_mixed = hsapiens108.genes(filter=filters.SeqNameFilter([1, "2"]))
 
-    pd.testing.assert_frame_equal(result_w_ints, result_w_strs)
-    pd.testing.assert_frame_equal(result_w_ints, result_w_mixed)
+    pd.testing.assert_frame_equal(
+        result_w_ints,
+        result_w_strs,
+    )
+    pd.testing.assert_frame_equal(
+        result_w_ints,
+        result_w_mixed,
+    )
