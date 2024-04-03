@@ -31,7 +31,9 @@ ANNOTATION_HUB_URL = (
 TIMESTAMP_URL = "https://annotationhub.bioconductor.org/metadata/database_timestamp"
 
 
-def annotation(species: str, version: str | int) -> EnsemblDB:
+def annotation(
+    species: str, version: str | int, backend: Literal["duckdb", "sqlite"] = "sqlite"
+) -> EnsemblDB:
     """Get an annotation database for a species and version.
 
     Parameters
@@ -40,6 +42,8 @@ def annotation(species: str, version: str | int) -> EnsemblDB:
         The species name. E.g. Hsapiens for human, Mmusculus for mouse.
     version
         The ensembl release number.
+    backend
+        The backend to use for the database. Either "sqlite" or "duckdb".
 
     Returns
     -------
@@ -55,10 +59,17 @@ def annotation(species: str, version: str | int) -> EnsemblDB:
             ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
         )
 
-        # Connect to DuckDB through Ibis
-        conn = ibis.duckdb.connect(":memory:", extensions=["sqlite"])
-        conn.attach_sqlite(sqlite_file_path)
-        ensdb = EnsemblDB(conn)
+        if backend == "sqlite":
+            # Connect to SQLite database
+            conn = ibis.sqlite.connect(sqlite_file_path)
+            ensdb = EnsemblDB(conn)
+        elif backend == "duckdb":
+            # Connect to DuckDB through Ibis
+            conn = ibis.duckdb.connect(":memory:", extensions=["sqlite"])
+            conn.attach_sqlite(sqlite_file_path)
+            ensdb = EnsemblDB(conn)
+        else:
+            raise ValueError(f"Invalid backend: {backend}")
 
     except HTTPError as err:
         if err.response.status_code == 404:
@@ -297,7 +308,7 @@ class EnsemblDB:
         else:
             query = self.db.table(table)
         # add filter
-        query = query.filter(filter.convert()).select(cols)
+        query = query.filter(filter.convert()).select(cols).order_by(cols)
         return query
 
     def _join_query(
