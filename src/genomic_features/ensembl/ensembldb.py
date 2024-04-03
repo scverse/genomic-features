@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
 from functools import cached_property
 from itertools import product
 from pathlib import Path
 from typing import Final, Literal
 
 import ibis
+import ibis.expr.types as ir
+import ibis.selectors as s
 import requests
 from ibis import deferred
 from ibis.expr.types import Table as IbisTable
@@ -160,6 +163,7 @@ class EnsemblDB:
         cols: list[str] | None = None,
         filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
+        order_by: Sequence[str] | str = ("seq_name", "gene_seq_start", "gene_seq_end"),
     ) -> DataFrame:
         """Get gene annotations.
 
@@ -172,6 +176,8 @@ class EnsemblDB:
             Filters to apply to the query.
         join_type
             How to perform joins during the query (if cols or filters requires them).
+        order_by
+            Columns to order the results by.
 
 
         Usage
@@ -183,11 +189,14 @@ class EnsemblDB:
             # TODO: check why R adds entrezid
             cols = self.list_columns(table)  # get all columns
 
+        if not isinstance(order_by, Sequence):
+            order_by = [order_by]
+
         cols = cols.copy()
         if "gene_id" not in cols:  # genes always needs gene_id
             cols.append("gene_id")
 
-        query = self._build_query(table, cols, filter, join_type)
+        query = self._build_query(table, cols, filter, join_type, order_by)
         return self._execute_query(query)
 
     def transcripts(
@@ -195,6 +204,7 @@ class EnsemblDB:
         cols: list[str] | None = None,
         filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
+        order_by: Sequence[str] | str = ("seq_name", "tx_seq_start", "tx_seq_end"),
     ) -> DataFrame:
         """Get transcript annotations.
 
@@ -203,10 +213,12 @@ class EnsemblDB:
         cols
             Which columns to retrieve from the database. Can be from other tables.
             Returns all transcript columns if None.
-        filters
+        filter
             Filters to apply to the query.
         join_type
             How to perform joins during the query (if cols or filters requires them).
+        order_by
+            Columns to order the results by.
 
 
         Usage
@@ -218,6 +230,10 @@ class EnsemblDB:
             cols = self.list_columns(table)  # get all columns
 
         cols = cols.copy()
+
+        if not isinstance(order_by, Sequence):
+            order_by = [order_by]
+
         # Require primary key in output
         if "tx_id" not in cols:
             cols.append("tx_id")
@@ -225,7 +241,7 @@ class EnsemblDB:
         if ("tx_seq_start" in cols or "tx_seq_end" in cols) and "seq_name" not in cols:
             cols.append("seq_name")
 
-        query = self._build_query(table, cols, filter, join_type)
+        query = self._build_query(table, cols, filter, join_type, order_by)
         return self._execute_query(query)
 
     def exons(
@@ -233,6 +249,12 @@ class EnsemblDB:
         cols: list[str] | None = None,
         filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
+        order_by: Sequence[str] | str = (
+            "seq_name",
+            "exon_seq_start",
+            "exon_seq_end",
+            "exon_id",
+        ),
     ) -> DataFrame:
         """Get exons table.
 
@@ -265,7 +287,7 @@ class EnsemblDB:
         ) and "seq_name" not in cols:
             cols.append("seq_name")
 
-        query = self._build_query(table, cols, filter, join_type)
+        query = self._build_query(table, cols, filter, join_type, order_by)
         return self._execute_query(query)
 
     def _execute_query(self, query: IbisTable) -> DataFrame:
@@ -288,6 +310,13 @@ class EnsemblDB:
         cols: list[str],
         filter: AbstractFilterExpr,
         join_type: Literal["inner", "left"] = "inner",
+        order_by: str
+        | ir.Column
+        | s.Selector
+        | Sequence[str]
+        | Sequence[ir.Column]
+        | Sequence[s.Selector]
+        | None = None,
     ) -> IbisTable:
         """Build a query for the genomic features table."""
         # Finalize cols
@@ -307,8 +336,15 @@ class EnsemblDB:
             query = self._join_query(tables, start_with=table, join_type=join_type)
         else:
             query = self.db.table(table)
+
         # add filter
-        query = query.filter(filter.convert()).select(cols).order_by(cols)
+        query = query.filter(filter.convert())
+
+        # add order_by
+        if order_by is not None:
+            query = query.order_by(order_by)
+
+        query = query.select(cols)
         return query
 
     def _join_query(
