@@ -8,8 +8,9 @@ def test_package_has_version():
     assert gf.__version__ is not None
 
 
-def test_genes():
-    genes = gf.ensembl.annotation("Hsapiens", 108).genes()
+@pytest.mark.parametrize("backend", ["sqlite", "duckdb"])
+def test_genes(backend):
+    genes = gf.ensembl.annotation("Hsapiens", 108, backend=backend).genes()
     assert isinstance(genes, pd.DataFrame)
 
 
@@ -30,8 +31,9 @@ def test_invalid_join():
         gf.ensembl.annotation("Hsapiens", 108).genes(cols=["tx_id"], join_type="flarb")
 
 
-def test_exons():
-    ensdb = gf.ensembl.annotation("Hsapiens", 108)
+@pytest.mark.parametrize("backend", ["sqlite", "duckdb"])
+def test_exons(backend):
+    ensdb = gf.ensembl.annotation("Hsapiens", 108, backend=backend)
     exons = ensdb.exons()
 
     pd.testing.assert_index_equal(

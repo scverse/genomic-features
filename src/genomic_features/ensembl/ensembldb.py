@@ -163,7 +163,12 @@ class EnsemblDB:
         cols: list[str] | None = None,
         filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
-        order_by: Sequence[str] | str = ("seq_name", "gene_seq_start", "gene_seq_end"),
+        order_by: Sequence[str] | str = (
+            "seq_name",
+            "gene_seq_start",
+            "gene_seq_end",
+            "gene_id",
+        ),
     ) -> DataFrame:
         """Get gene annotations.
 
@@ -249,12 +254,7 @@ class EnsemblDB:
         cols: list[str] | None = None,
         filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
-        order_by: Sequence[str] | str = (
-            "seq_name",
-            "exon_seq_start",
-            "exon_seq_end",
-            "exon_id",
-        ),
+        order_by: Sequence[str] | str = ("exon_id"),
     ) -> DataFrame:
         """Get exons table.
 
