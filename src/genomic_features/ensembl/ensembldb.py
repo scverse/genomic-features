@@ -14,8 +14,8 @@ from pandas import DataFrame, Timestamp
 from requests.exceptions import HTTPError
 
 from genomic_features import filters
-from genomic_features._core import filters as _filters
 from genomic_features._core.cache import retrieve_annotation
+from genomic_features._core.filters import AbstractFilterExpr
 
 PKG_CACHE_DIR = "genomic-features"
 
@@ -145,7 +145,7 @@ class EnsemblDB:
     def genes(
         self,
         cols: list[str] | None = None,
-        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
         """Get gene annotations.
@@ -180,7 +180,7 @@ class EnsemblDB:
     def transcripts(
         self,
         cols: list[str] | None = None,
-        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
         """Get transcript annotations.
@@ -218,7 +218,7 @@ class EnsemblDB:
     def exons(
         self,
         cols: list[str] | None = None,
-        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
     ) -> DataFrame:
         """Get exons table.
@@ -273,7 +273,7 @@ class EnsemblDB:
         self,
         table: Literal["gene", "tx", "exon"],
         cols: list[str],
-        filter: _filters.AbstractFilterExpr,
+        filter: AbstractFilterExpr,
         join_type: Literal["inner", "left"] = "inner",
     ) -> IbisTable:
         """Build a query for the genomic features table."""
