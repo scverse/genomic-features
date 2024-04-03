@@ -32,7 +32,7 @@ TIMESTAMP_URL = "https://annotationhub.bioconductor.org/metadata/database_timest
 
 
 def annotation(
-    species: str, version: str | int, backend: Literal["duckdb", "sqlite"] = "duckdb"
+    species: str, version: str | int, backend: Literal["duckdb", "sqlite"] = "sqlite"
 ) -> EnsemblDB:
     """Get an annotation database for a species and version.
 
