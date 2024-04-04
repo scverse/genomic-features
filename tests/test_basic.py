@@ -34,10 +34,7 @@ def test_invalid_backend():
 
 def test_repr():
     result = repr(gf.ensembl.annotation("Hsapiens", ENSEMBL_RELEASE))
-    expected = (
-        f"EnsemblDB(organism='Homo sapiens', ensembl_release='{ENSEMBL_RELEASE}')"
-    )
-
+    expected = f"EnsemblDB(organism='Homo sapiens', ensembl_release='{ENSEMBL_RELEASE}', genome_build='GRCh38')"
     assert result == expected
 
 

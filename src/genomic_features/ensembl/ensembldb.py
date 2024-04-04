@@ -22,12 +22,7 @@ from genomic_features._core.filters import AbstractFilterExpr
 
 PKG_CACHE_DIR = "genomic-features"
 
-BIOC_ANNOTATION_HUB_URL = (
-    "https://bioconductorhubs.blob.core.windows.net/annotationhub/"
-)
-ENSEMBL_URL_TEMPLATE = (
-    BIOC_ANNOTATION_HUB_URL + "AHEnsDbs/v{version}/EnsDb.{species}.v{version}.sqlite"
-)
+BIOC_ANNOTATION_HUB_URL = "https://bioconductorhubs.blob.core.windows.net/annotationhub"
 ANNOTATION_HUB_URL = (
     "https://annotationhub.bioconductor.org/metadata/annotationhub.sqlite3"
 )
@@ -59,7 +54,7 @@ def annotation(
     """
     try:
         sqlite_file_path = retrieve_annotation(
-            ENSEMBL_URL_TEMPLATE.format(species=species, version=version)
+            f"{BIOC_ANNOTATION_HUB_URL}/AHEnsDbs/v{version}/EnsDb.{species}.v{version}.sqlite"
         )
 
         if backend == "sqlite":
@@ -77,7 +72,8 @@ def annotation(
     except HTTPError as err:
         if err.response.status_code == 404:
             raise ValueError(
-                f"No Ensembl database found for {species} v{version}. Check available versions with `genomic_features.ensembl.list_versions`."
+                f"No Ensembl database found for {species} v{version}. Check "
+                f"available versions with `genomic_features.ensembl.list_ensdb_annotations `."
             ) from err
         else:
             raise HTTPError from err
@@ -128,7 +124,8 @@ def list_ensdb_annotations(species: None | str | list[str] = None) -> DataFrame:
         # check that species exist
         if version_table.shape[0] == 0:
             raise ValueError(
-                f"No Ensembl database found for {species}. Check species name."
+                f"No Ensembl database found for {species}. Available species can "
+                f"be found via: `list_ensdb_annotations()['Species'].unique()`."
             )
 
     version_table["Ensembl_version"] = version_table["rdatapath"].str.split(
@@ -156,7 +153,11 @@ class EnsemblDB:
 
     def __repr__(self) -> str:
         d = self.metadata
-        return f"EnsemblDB(organism='{d['Organism']}', ensembl_release='{d['ensembl_version']}')"
+        return (
+            f"EnsemblDB(organism='{d['Organism']}', "
+            f"ensembl_release='{d['ensembl_version']}', "
+            f"genome_build='{d['genome_build']}')"
+        )
 
     def genes(
         self,
