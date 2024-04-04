@@ -13,6 +13,12 @@ def test_genes(backend):
     genes = gf.ensembl.annotation("Hsapiens", 108, backend=backend).genes()
     assert isinstance(genes, pd.DataFrame)
 
+    # Test sort order
+    genes_resorted = genes.sort_values(
+        ["seq_name", "gene_seq_start", "gene_id"]
+    ).reset_index(drop=True)
+    pd.testing.assert_frame_equal(genes, genes_resorted)
+
 
 def test_missing_version():
     with pytest.raises(ValueError):
@@ -46,3 +52,9 @@ def test_exons(backend):
 
     pd.testing.assert_index_equal(exons_id.columns, pd.Index(["exon_id"]))
     assert exons_id.shape[0] == exons.shape[0]
+
+    # Test sort order
+    exons_resorted = exons.sort_values(
+        ["seq_name", "exon_seq_start", "exon_id"]
+    ).reset_index(drop=True)
+    pd.testing.assert_frame_equal(exons, exons_resorted)
