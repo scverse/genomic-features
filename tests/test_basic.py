@@ -20,7 +20,7 @@ def test_missing_version():
 
 def test_repr():
     result = repr(gf.ensembl.annotation("Hsapiens", 108))
-    expected = "EnsemblDB(organism='Homo sapiens', ensembl_release='108')"
+    expected = "EnsemblDB(organism='Homo sapiens', ensembl_release='108', genome_build='GRCh38')"
 
     assert result == expected
 
