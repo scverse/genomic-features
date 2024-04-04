@@ -6,8 +6,6 @@ from itertools import product
 from pathlib import Path
 from typing import Final, Literal
 
-import os
-
 import ibis
 import requests
 from ibis import deferred
