@@ -3,7 +3,6 @@ from __future__ import annotations
 import warnings
 from functools import cached_property
 from itertools import product
-import os
 from pathlib import Path
 from typing import Final, Literal
 
