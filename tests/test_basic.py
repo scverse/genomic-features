@@ -27,6 +27,11 @@ def test_missing_version():
         gf.ensembl.annotation("Hsapiens", 86)
 
 
+def test_invalid_backend():
+    with pytest.raises(ValueError):
+        gf.ensembl.annotation("Hsapiens", ENSEMBL_RELEASE, backend="bad_idea")
+
+
 def test_repr():
     result = repr(gf.ensembl.annotation("Hsapiens", ENSEMBL_RELEASE))
     expected = (
