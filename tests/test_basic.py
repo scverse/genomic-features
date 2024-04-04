@@ -90,3 +90,23 @@ def test_join_sort_ordering(backend):
         ["seq_name", "gene_seq_start", "exon_seq_start", "exon_id", "gene_id"]
     ).reset_index(drop=True)
     pd.testing.assert_frame_equal(df, df_resorted)
+
+
+@pytest.mark.parametrize("backend", ["sqlite", "duckdb"])
+def test_custom_ordering(backend):
+    ensdb = gf.ensembl.annotation("Hsapiens", ENSEMBL_RELEASE, backend=backend)
+    df = ensdb.genes(
+        [
+            "seq_name",
+            "gene_seq_start",
+            "gene_seq_end",
+            "exon_id",
+            "exon_seq_start",
+            "exon_seq_end",
+        ],
+        order_by="exon_id",
+    )
+
+    # Test sort order
+    df_resorted = df.sort_values(["exon_id"]).reset_index(drop=True)
+    pd.testing.assert_frame_equal(df, df_resorted)
