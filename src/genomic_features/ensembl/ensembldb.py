@@ -6,6 +6,8 @@ from itertools import product
 from pathlib import Path
 from typing import Final, Literal
 
+import os
+
 import ibis
 import requests
 from ibis import deferred
@@ -19,9 +21,7 @@ from genomic_features._core.filters import AbstractFilterExpr
 
 PKG_CACHE_DIR = "genomic-features"
 
-BIOC_ANNOTATION_HUB_URL = (
-    "https://bioconductorhubs.blob.core.windows.net/annotationhub"
-)
+BIOC_ANNOTATION_HUB_URL = "https://bioconductorhubs.blob.core.windows.net/annotationhub"
 ANNOTATION_HUB_URL = (
     "https://annotationhub.bioconductor.org/metadata/annotationhub.sqlite3"
 )
@@ -53,7 +53,7 @@ def annotation(
     """
     try:
         sqlite_file_path = retrieve_annotation(
-            f'{BIOC_ANNOTATION_HUB_URL}/AHEnsDbs/v{version}/EnsDb.{species}.v{version}.sqlite'
+            f"{BIOC_ANNOTATION_HUB_URL}/AHEnsDbs/v{version}/EnsDb.{species}.v{version}.sqlite"
         )
 
         if backend == "sqlite":
