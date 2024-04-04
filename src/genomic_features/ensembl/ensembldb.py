@@ -163,12 +163,7 @@ class EnsemblDB:
         cols: list[str] | None = None,
         filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
-        order_by: Sequence[str] | str = (
-            "seq_name",
-            "gene_seq_start",
-            "gene_seq_end",
-            "gene_id",
-        ),
+        order_by: Sequence[str] | str | None = None,
     ) -> DataFrame:
         """Get gene annotations.
 
@@ -194,9 +189,6 @@ class EnsemblDB:
             # TODO: check why R adds entrezid
             cols = self.list_columns(table)  # get all columns
 
-        if not isinstance(order_by, Sequence):
-            order_by = [order_by]
-
         cols = cols.copy()
         if "gene_id" not in cols:  # genes always needs gene_id
             cols.append("gene_id")
@@ -209,7 +201,7 @@ class EnsemblDB:
         cols: list[str] | None = None,
         filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
-        order_by: Sequence[str] | str = ("seq_name", "tx_seq_start", "tx_seq_end"),
+        order_by: Sequence[str] | str | None = None,
     ) -> DataFrame:
         """Get transcript annotations.
 
@@ -236,9 +228,6 @@ class EnsemblDB:
 
         cols = cols.copy()
 
-        if not isinstance(order_by, Sequence):
-            order_by = [order_by]
-
         # Require primary key in output
         if "tx_id" not in cols:
             cols.append("tx_id")
@@ -254,7 +243,7 @@ class EnsemblDB:
         cols: list[str] | None = None,
         filter: AbstractFilterExpr = filters.EmptyFilter(),
         join_type: Literal["inner", "left"] = "inner",
-        order_by: Sequence[str] | str = ("exon_id"),
+        order_by: Sequence[str] | str | None = None,
     ) -> DataFrame:
         """Get exons table.
 
@@ -339,12 +328,26 @@ class EnsemblDB:
 
         # add filter
         query = query.filter(filter.convert())
+        query = query.select(cols)
 
-        # add order_by
         if order_by is not None:
+            # Custom ordering is provided
+            query = query.order_by(order_by)
+        else:
+            # Default ordering
+            order_by = []
+            if "seq_name" in cols:
+                order_by = ["seq_name"]
+            if "gene_seq_start" in cols:
+                order_by.extend(["gene_seq_start"])
+            if "tx_seq_start" in cols:
+                order_by.extend(["tx_seq_start"])
+            if "exon_seq_start" in cols:
+                order_by.extend(["exon_seq_start"])
+
+            order_by.extend([c for c in cols if "id" in c])
             query = query.order_by(order_by)
 
-        query = query.select(cols)
         return query
 
     def _join_query(
