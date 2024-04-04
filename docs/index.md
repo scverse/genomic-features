@@ -8,6 +8,7 @@
 
 notebooks/basic_usage
 api.md
+how-to/index
 changelog.md
 contributing.md
 references.md
