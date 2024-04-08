@@ -19,9 +19,7 @@ from genomic_features._core.filters import AbstractFilterExpr
 
 PKG_CACHE_DIR = "genomic-features"
 
-BIOC_ANNOTATION_HUB_URL = (
-    "https://bioconductorhubs.blob.core.windows.net/annotationhub"
-)
+BIOC_ANNOTATION_HUB_URL = "https://bioconductorhubs.blob.core.windows.net/annotationhub"
 ANNOTATION_HUB_URL = (
     "https://annotationhub.bioconductor.org/metadata/annotationhub.sqlite3"
 )
@@ -53,7 +51,7 @@ def annotation(
     """
     try:
         sqlite_file_path = retrieve_annotation(
-            f'{BIOC_ANNOTATION_HUB_URL}/AHEnsDbs/v{version}/EnsDb.{species}.v{version}.sqlite'
+            f"{BIOC_ANNOTATION_HUB_URL}/AHEnsDbs/v{version}/EnsDb.{species}.v{version}.sqlite"
         )
 
         if backend == "sqlite":
@@ -440,12 +438,19 @@ class EnsemblDB:
         return self._tables_by_degree(tab)
 
     def list_columns(self, tables: str | list[str] | None = None) -> list[str]:
-        """List all columns available in the genomic features table."""
+        """List queryable columns available in these tables."""
         if tables is None:
             tables = self.db.list_tables()  # list of table names
+            if "metadata" in tables:
+                tables.remove("metadata")
         elif isinstance(tables, str):
             tables = [tables]  # list of tables names (only one)
-        columns = [c for t in tables for c in self.db.table(t).columns]
+
+        columns = []
+        for t in tables:
+            for c in self.db.table(t).columns:
+                if c not in columns:
+                    columns.append(c)
         return columns
 
     def _clean_columns(self, columns: list[str]) -> list[str]:
