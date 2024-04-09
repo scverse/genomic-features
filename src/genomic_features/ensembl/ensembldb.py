@@ -440,7 +440,7 @@ class EnsemblDB:
     def list_columns(self, tables: str | list[str] | None = None) -> list[str]:
         """List queryable columns available in these tables."""
         if tables is None:
-            tables = self.db.list_tables()  # list of table names
+            tables = self._tables_by_degree()  # list of table names
             if "metadata" in tables:
                 tables.remove("metadata")
         elif isinstance(tables, str):
