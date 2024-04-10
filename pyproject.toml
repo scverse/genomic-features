@@ -51,6 +51,7 @@ doc = [
     "ipykernel",
     "ipython",
     "sphinx-copybutton",
+    "bioframe",
 ]
 test = [
     "pytest",
