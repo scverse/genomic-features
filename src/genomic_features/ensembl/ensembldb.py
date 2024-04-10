@@ -438,12 +438,19 @@ class EnsemblDB:
         return self._tables_by_degree(tab)
 
     def list_columns(self, tables: str | list[str] | None = None) -> list[str]:
-        """List all columns available in the genomic features table."""
+        """List queryable columns available in these tables."""
         if tables is None:
-            tables = self.db.list_tables()  # list of table names
+            tables = self._tables_by_degree()  # list of table names
+            if "metadata" in tables:
+                tables.remove("metadata")
         elif isinstance(tables, str):
             tables = [tables]  # list of tables names (only one)
-        columns = [c for t in tables for c in self.db.table(t).columns]
+
+        columns = []
+        for t in tables:
+            for c in self.db.table(t).columns:
+                if c not in columns:
+                    columns.append(c)
         return columns
 
     def _clean_columns(self, columns: list[str]) -> list[str]:

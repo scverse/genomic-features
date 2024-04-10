@@ -125,3 +125,20 @@ def test_chromosome_columns(hsapiens108):
         .reset_index(drop=True)
     )
     pd.testing.assert_series_equal(result["seq_length"], expected_lengths)
+
+
+def test_list_columns_uniqueness(hsapiens108):
+    # https://github.com/scverse/genomic-features/issues/42
+    cols = hsapiens108.list_columns()
+    assert len(cols) == len(set(cols))
+
+    cols = hsapiens108.list_columns(["gene", "tx"])
+    assert len(cols) == len(set(cols))
+
+
+def test_list_columns_include_unqueryable_cols(hsapiens108):
+    # https://github.com/scverse/genomic-features/issues/42
+    cols = hsapiens108.list_columns()
+    # From metadata
+    assert "value" not in cols
+    assert "name" not in cols
