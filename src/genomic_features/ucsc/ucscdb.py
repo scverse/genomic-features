@@ -28,6 +28,22 @@ ANNOTATION_HUB_URL = (
 )
 TIMESTAMP_URL = "https://annotationhub.bioconductor.org/metadata/database_timestamp"
 
+_TX_TABLE = 'transcript'
+_EXONS_TABLE = 'exon'
+_GENES_TABLE = 'gene'
+
+_PRETTY_NAMES = {
+    '_tx_id': 'tx_id',
+    'tx_chrom': 'chrom',
+    'tx_strand': 'strand',
+    'tx_start': 'start',
+    'tx_end': 'end',
+    '_exon_id': 'exon_id',
+    'exon_chrom': 'chrom',
+    'exon_strand': 'strand',
+    'exon_start': 'start',
+    'exon_end': 'end',
+}
 
 def annotation(species: str, bioc_version: str, assembly: str,
                ucsc_table: str) -> UCSCDB:
@@ -135,105 +151,43 @@ class UCSCDB:
         d = self.metadata
         return f"UCSCDB(organism='{d['Organism']}', ucsc_track='{d['UCSC Track']}', genome='{d['Genome']}', ucsc_table='{d['UCSC Table']}')"
 
-    # TODO(gamazeps): should we add some info on that ? UCSC just has tx_id
-    def genes(
-        self,
-        cols: list[str] | None = None,
-        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
-        join_type: Literal["inner", "left"] = "inner",
-    ) -> DataFrame:
-        table: Final = "gene"
-        if cols is None:
-            cols = self.list_columns(table)  # get all columns
-
-        cols = cols.copy()
-        if "gene_id" not in cols:  # genes always needs gene_id
-            cols.append("gene_id")
-
-        query = self._build_query(table, cols, filter, join_type)
-        return self._execute_query(query)
-
-    def transcripts(
-        self,
-        cols: list[str] | None = None,
-        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
-        join_type: Literal["inner", "left"] = "inner",
-    ) -> DataFrame:
-        table: Final = "transcript"
-        if cols is None:
-            cols = self.list_columns(table)  # get all columns
-
-        cols = cols.copy()
-        # Require primary key in output
-        if "_tx_id" not in cols:
-            cols.append("_tx_id")
-        # seq_name is required for genomic range operations
-        if ("tx_start" in cols or "tx_end" in cols) and "tx_chrome" not in cols:
-            cols.append("tx_chrom")
-
-        query = self._build_query(table, cols, filter, join_type)
-        return self._execute_query(query)
-
-    def exons(
-        self,
-        cols: list[str] | None = None,
-        filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
-        join_type: Literal["inner", "left"] = "inner",
-    ) -> DataFrame:
-        table: Final = "exon"
-        if cols is None:
-            cols = self.list_columns(table)  # get all columns
-
-        cols = cols.copy()
-        # Require primary key in output
-        if "_exon_id" not in cols:
-            cols.append("_exon_id")
-        # seq_name is required for genomic range operations
-        if (
-            "exon_start" in cols or "exon_end" in cols
-        ) and "exon_chrom" not in cols:
-            cols.append("exon_chrom")
-
-        query = self._build_query(table, cols, filter, join_type)
-        return self._execute_query(query)
-
-    def _execute_query(self, query: IbisTable) -> DataFrame:
-        # TODO: Allow more options for returning results
-        return query.distinct().execute()
-
     def chrominfo(self) -> DataFrame:
         return self.db.table("chrominfo").execute()
 
     def list_tables(self) -> list:
         return self.db.list_tables()
 
-    def _tables_by_degree(self, tab: list[str] = None) -> list:
-        if tab is None:
-            tab = self.list_tables()  # list of table names
-        # check that all tables are in the database and print warning
-        if not set(tab).issubset(set(self.list_tables())):
-            missing_tables = ", ".join(set(tab) - set(self.list_tables()))
-            warnings.warn(
-                f"The following tables are not in the database: {missing_tables}.",
-                UserWarning,
-                stacklevel=2,
-            )
+    def transcripts(
+        self,
+        #cols: list[str] | None = None,
+        #filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+    ) -> DataFrame:
+        tx = self.db.table(_TX_TABLE).execute()
+        tx = tx.rename(columns=_PRETTY_NAMES)
+        tx = tx.drop('tx_type', axis=1) # always None
+        return tx
 
-            tab = list(set(tab) & set(self.list_tables()))  # remove tables not in db
+    def exons(
+        self,
+        #cols: list[str] | None = None,
+        #filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+    ) -> DataFrame:
+        exons = self.db.table(_EXONS_TABLE).execute()
+        exons = exons.rename(columns=_PRETTY_NAMES)
+        exons = exons.drop('exon_name', axis=1) # always None
+        return exons
 
-        # order tables
+    def genes(
+        self,
+        #cols: list[str] | None = None,
+        #filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+    ) -> DataFrame:
+        genes = self.db.table(_GENES_TABLE).execute()
+        return genes
 
-        table_order = {
-            "transcript": 1,
-            "cds": 2,
-            "gene": 3,
-            "splicing": 4,
-            "exon": 5,
-            "chrominfo": 6,
-            "metadata": 99,
-        }
-
-        return sorted(tab, key=lambda x: table_order[x])
+    def _execute_query(self, query: IbisTable) -> DataFrame:
+        # TODO: Allow more options for returning results
+        return query.distinct().execute()
 
     def list_columns(self, tables: str | list[str] | None = None) -> list[str]:
         if tables is None:
@@ -257,34 +211,6 @@ class UCSCDB:
         if not cols:
             raise ValueError("No valid columns were found.")
         return cols
-
-    def _tables_for_columns(self, cols: list, start_with: str | None = None) -> list:
-        cols = self._clean_columns(cols)
-        table_list = self._tables_by_degree()  # list of table names
-
-        # remove start_with from table_list and add it to the beginning of the list
-        if start_with is not None:
-            # check if start_with is a valid table
-            if start_with not in table_list:
-                raise ValueError(f"Invalid table: {start_with}")
-            # remove start_with from table_list and add it to the beginning of the list
-            table_list.remove(start_with)
-            table_list = [start_with] + table_list
-
-        tables = []
-        for t in table_list:
-            # check if all columns are in one table
-            if set(cols).issubset(self.db.table(t).columns):
-                tables.append(t)
-                return tables
-            else:
-                # check if a single column is in the table
-                for c in cols.copy():
-                    if c in self.db.table(t).columns:
-                        if t not in tables:
-                            tables.append(t)
-                        cols.remove(c)  # remove column from list
-        return tables
 
     def _build_query(
         self,
@@ -314,60 +240,3 @@ class UCSCDB:
         # add filter
         query = query.filter(filter.convert()).select(cols)
         return query
-
-    def _join_query(
-        self,
-        tables: list[str],
-        start_with: str,
-        join_type: Literal["inner", "left"] = "inner",
-    ) -> IbisTable:
-        """Join tables and return a query."""
-        # check for intermediate tables
-        JOIN_TABLE = [
-            (("gene", "tx"), "gene_id"),
-            (("gene", "chromosome"), "seq_name"),
-            (("tx", "tx2exon"), "tx_id"),
-            (("tx2exon", "exon"), "exon_id"),
-            (("tx", "protein"), "tx_id"),
-            (("gene", "entrezgene"), "gene_id"),
-            (("protein", "protein_domain"), "protein_id"),
-            (("protein", "uniprot"), "protein_id"),
-            (("uniprot", "protein_domain"), "protein_id"),
-        ]
-        tables = tables.copy()
-        tables.remove(start_with)
-        db = self.db
-        current_tables = [start_with]
-        query = db.table(start_with)
-
-        while len(tables) > 0:
-            for (table_names, key), t1_name, t2_name in product(  # noqa: B007
-                JOIN_TABLE, current_tables, tables
-            ):
-                if t1_name in table_names and t2_name in table_names:
-                    break
-            else:
-                raise ValueError(
-                    f"Failed to find match for tables: {current_tables} and {tables}"
-                )
-
-            current_tables.append(t2_name)
-            tables.remove(t2_name)
-
-            t2 = db.table(t2_name)
-            if join_type == "inner":
-                query = query.join(t2, predicates=[key], how="inner")
-            elif join_type == "left":
-                query = query.join(
-                    t2,
-                    predicates=[key],
-                    how="left",
-                    rname="{name}_y",
-                    # suffixes=("", "_y"),
-                )
-                query = query.drop(f"{key}_y")  # drop duplicate columns
-            else:
-                raise ValueError(f"Invalid join type: {join_type}")
-
-        return query
-
