@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import warnings
-from functools import cached_property
-from itertools import product
 import os
+from functools import cached_property
 from pathlib import Path
-from typing import Final, Literal
+from typing import Literal
 
 import ibis
 import requests
@@ -14,7 +12,6 @@ from ibis.expr.types import Table as IbisTable
 from pandas import DataFrame, Timestamp
 from requests.exceptions import HTTPError
 
-from genomic_features import filters
 from genomic_features._core import filters as _filters
 from genomic_features._core.cache import retrieve_annotation
 
@@ -28,32 +25,36 @@ ANNOTATION_HUB_URL = (
 )
 TIMESTAMP_URL = "https://annotationhub.bioconductor.org/metadata/database_timestamp"
 
-_TX_TABLE = 'transcript'
-_EXONS_TABLE = 'exon'
-_GENES_TABLE = 'gene'
+_TX_TABLE = "transcript"
+_EXONS_TABLE = "exon"
+_GENES_TABLE = "gene"
 
 _PRETTY_NAMES = {
-    '_tx_id': 'tx_id',
-    'tx_chrom': 'chrom',
-    'tx_strand': 'strand',
-    'tx_start': 'start',
-    'tx_end': 'end',
-    '_exon_id': 'exon_id',
-    'exon_chrom': 'chrom',
-    'exon_strand': 'strand',
-    'exon_start': 'start',
-    'exon_end': 'end',
+    "_tx_id": "tx_id",
+    "tx_chrom": "chrom",
+    "tx_strand": "strand",
+    "tx_start": "start",
+    "tx_end": "end",
+    "_exon_id": "exon_id",
+    "exon_chrom": "chrom",
+    "exon_strand": "strand",
+    "exon_start": "start",
+    "exon_end": "end",
 }
 
-def annotation(species: str, bioc_version: str, assembly: str,
-               ucsc_table: str) -> UCSCDB:
+
+def annotation(
+    species: str, bioc_version: str, assembly: str, ucsc_table: str
+) -> UCSCDB:
     try:
         ucscdb = UCSCDB(
             ibis.sqlite.connect(
-                retrieve_annotation(os.path.join(
-                    BIOC_ANNOTATION_HUB_URL,
-                    f"ucsc/standard/{bioc_version}/TxDb.{species}.UCSC.{assembly}.{ucsc_table}.sqlite"
-                ))
+                retrieve_annotation(
+                    os.path.join(
+                        BIOC_ANNOTATION_HUB_URL,
+                        f"ucsc/standard/{bioc_version}/TxDb.{species}.UCSC.{assembly}.{ucsc_table}.sqlite",
+                    )
+                )
             )
         )
     except HTTPError as err:
@@ -84,7 +85,7 @@ def list_ucscdb_annotations(species: None | str | list[str] = None) -> DataFrame
     -----
     >>> gf.ensembl.list_ensdb_annotations("Mmusculus")
     """
-    _COL_ORDERS = ['species', 'assembly', 'ucsc_table', 'bioc_version']
+    _COL_ORDERS = ["species", "assembly", "ucsc_table", "bioc_version"]
     # Get latest AnnotationHub timestamp
     db_path = Path(retrieve_annotation(ANNOTATION_HUB_URL))
     timestamp = requests.get(TIMESTAMP_URL).text
@@ -98,12 +99,13 @@ def list_ucscdb_annotations(species: None | str | list[str] = None) -> DataFrame
     version_table = (
         ahdb.table("rdatapaths").filter(deferred.rdataclass == "TxDb").execute()
     )
-    version_table = version_table[version_table['rdatapath'].map(lambda x: x.split('/')[0] == 'ucsc')]
+    version_table = version_table[
+        version_table["rdatapath"].map(lambda x: x.split("/")[0] == "ucsc")
+    ]
 
-    version_table["bioc_version"] = (
-        version_table["rdatapath"]
-        .str.split("/", expand=True)[2]
-    )
+    version_table["bioc_version"] = version_table["rdatapath"].str.split(
+        "/", expand=True
+    )[2]
     version_table["species"] = (
         version_table["rdatapath"]
         .str.split("/", expand=True)[3]
@@ -120,7 +122,7 @@ def list_ucscdb_annotations(species: None | str | list[str] = None) -> DataFrame
         .str.split(".", expand=True)[4]
     )
     # `Athaliana` do not follow the normal name formatting, drop them.
-    version_table = version_table[version_table['ucsc_table'] != 'sqlite']
+    version_table = version_table[version_table["ucsc_table"] != "sqlite"]
 
     if species is not None:
         if isinstance(species, str):
@@ -159,28 +161,28 @@ class UCSCDB:
 
     def transcripts(
         self,
-        #cols: list[str] | None = None,
-        #filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        # cols: list[str] | None = None,
+        # filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
     ) -> DataFrame:
         tx = self.db.table(_TX_TABLE).execute()
         tx = tx.rename(columns=_PRETTY_NAMES)
-        tx = tx.drop('tx_type', axis=1) # always None
+        tx = tx.drop("tx_type", axis=1)  # always None
         return tx
 
     def exons(
         self,
-        #cols: list[str] | None = None,
-        #filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        # cols: list[str] | None = None,
+        # filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
     ) -> DataFrame:
         exons = self.db.table(_EXONS_TABLE).execute()
         exons = exons.rename(columns=_PRETTY_NAMES)
-        exons = exons.drop('exon_name', axis=1) # always None
+        exons = exons.drop("exon_name", axis=1)  # always None
         return exons
 
     def genes(
         self,
-        #cols: list[str] | None = None,
-        #filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
+        # cols: list[str] | None = None,
+        # filter: _filters.AbstractFilterExpr = filters.EmptyFilter(),
     ) -> DataFrame:
         genes = self.db.table(_GENES_TABLE).execute()
         return genes
