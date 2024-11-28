@@ -309,7 +309,13 @@ class EnsemblDB:
         else:
             query = self.db.table(table)
         # add filter
-        query = query.filter(filter.convert()).select(cols).order_by(cols)
+        
+        filter = filter.convert()
+        if filter is None:
+            query = query.select(cols).order_by(cols)
+        else:
+            query = query.filter(filter).select(cols).order_by(cols)
+            
         return query
 
     def _join_query(
