@@ -309,11 +309,11 @@ class EnsemblDB:
         else:
             query = self.db.table(table)
         # add filter
-        
+
         filter = filter.convert()
         if filter is not None:
             query = query.filter(filter)
-            
+
         query = query.select(cols).order_by(cols)
         return query
 
