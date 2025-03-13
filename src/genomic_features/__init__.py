@@ -1,7 +1,7 @@
 from importlib.metadata import version
 
-from . import ensembl, filters
+from . import ensembl, filters, ucsc
 
-__all__ = ["ensembl"]
+__all__ = ["ensembl", "ucsc"]
 
 __version__ = version("genomic-features")
