@@ -28,17 +28,17 @@ jobs:
       PYTHON: ${{ matrix.python }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
           cache: "pip"
           cache-dependency-path: "**/pyproject.toml"
 
       - name: Cache datasets
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: ~/.cache/genomic-features
           key: "datasets-${{ hashFiles('**/pyproject.toml') }}')}}"
@@ -61,4 +61,4 @@ jobs:
           pytest -v --cov --color=yes
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v7
